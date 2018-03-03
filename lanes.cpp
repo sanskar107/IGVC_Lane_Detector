@@ -13,7 +13,7 @@ using namespace cv;
 
 class Lanes
 {
-	Mat img,img_gray;
+	Mat img,img_gray,bisect;
 public:
 	Lanes(string name);
 	void Mix_Channel();
@@ -22,6 +22,7 @@ public:
 	void Intensity_adjust();
 	void Brightest_Pixel();
 	void Edge();
+	void Hough();
 };
 
 int main(int argc, char** argv)
@@ -32,12 +33,13 @@ int main(int argc, char** argv)
 	// L.display();
 	// L.Intensity_distribution();
 	L.Intensity_adjust();
-	L.Edge();
+	L.Brightest_Pixel();
+	L.Hough();
 	// L.Intensity_distribution();
 	L.Mix_Channel();
 	// L.display();
-	L.Brightest_Pixel();
 	L.Edge();
+	L.Hough();
 	return 0;
 
 }
@@ -109,12 +111,13 @@ void Lanes::Intensity_adjust()
 
 void Lanes::Brightest_Pixel()
 {
-	Mat bisect(img.rows,img.cols,CV_8UC1,Scalar(0));
+	bisect = img_gray.clone();
 	for(int i = 0; i < img.rows; i++)
 	{
 		int l,r,max = 0;
 		for(int j = 0; j < img.cols/2; j++)
 		{
+			bisect.at<uchar>(i,j) = 0;
 			if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
 			// else img_gray.at<uchar>(i,j) = 255;
 
@@ -129,6 +132,7 @@ void Lanes::Brightest_Pixel()
 		max = 0;
 		for(int j = img.cols/2 + 1; j < img.cols; j++)
 		{
+			bisect.at<uchar>(i,j) = 0;
 			if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
 			// else img_gray.at<uchar>(i,j) = 255;
 			
@@ -165,5 +169,23 @@ void Lanes::Edge()
 			else img_gray.at<uchar>(i,j) = 0;
 		}
 	imshow("Angle Threshold", img_gray);
+	waitKey(0);
+}
+
+void Lanes::Hough()
+{
+	vector<Vec4i> lines;
+	Mat color_lines = img.clone();
+	HoughLinesP(bisect, lines, 3.0, 2.0*CV_PI/180, 2);
+	for(int i = 0; i < lines.size(); i++)
+		line(color_lines, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8);
+	imshow("lines_bisect",color_lines);
+	waitKey(0);
+	vector<Vec4i> lines_1;
+	HoughLinesP(img_gray, lines_1, 3.0, 2.0*CV_PI/180, 30);
+	for(int i = 0; i < lines_1.size(); i++)
+		line(color_lines, Point(lines_1[i][0], lines_1[i][1]), Point(lines_1[i][2], lines_1[i][3]), Scalar(255,0,0), 3, 8);
+	imshow("lines_bisect",color_lines);
+	// imshow("lines_gray",img_gray);
 	waitKey(0);
 }
