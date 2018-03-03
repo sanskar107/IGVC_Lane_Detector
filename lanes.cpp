@@ -14,6 +14,7 @@ using namespace cv;
 class Lanes
 {
 	Mat img,img_gray,bisect;
+	vector<Vec2i> L,R;
 public:
 	Lanes(string name);
 	void Mix_Channel();
@@ -23,6 +24,8 @@ public:
 	void Brightest_Pixel();
 	void Edge();
 	void Hough();
+	void Dilation();
+	void control_points();
 };
 
 int main(int argc, char** argv)
@@ -34,12 +37,14 @@ int main(int argc, char** argv)
 	// L.Intensity_distribution();
 	L.Intensity_adjust();
 	L.Brightest_Pixel();
+	L.control_points();
 	L.Hough();
 	// L.Intensity_distribution();
 	L.Mix_Channel();
 	// L.display();
 	L.Edge();
 	L.Hough();
+	L.control_points();
 	return 0;
 
 }
@@ -145,6 +150,7 @@ void Lanes::Brightest_Pixel()
 		}
 		if(max > 100) bisect.at<uchar>(i,r) = 255;
 	}
+	Dilation();
 	imshow("bisect",bisect);
 	imshow("Threshold",img_gray);
 	waitKey(0);
@@ -172,6 +178,28 @@ void Lanes::Edge()
 	waitKey(0);
 }
 
+void Lanes::Dilation()
+{
+	Mat temp = bisect.clone();
+	for(int i = 0; i < img.rows; i++)
+	{
+		for(int j = 0; j < img.cols; j++)
+		{
+			int count=0;
+			for(int m = i-1; m < i+2; m++)
+			{
+				for(int n = j-1; n < j+2; n++)
+				{
+					if(m<0 || n<0 || m>=img.rows || n>=img.cols) continue;
+					if(img_gray.at<uchar>(m,n) > INTENSITY_TH) count++;
+				}
+			}
+			if(count > 1) temp.at<uchar>(i,j)=255;
+		}
+	}
+	bisect = temp;
+}
+
 void Lanes::Hough()
 {
 	vector<Vec4i> lines;
@@ -187,5 +215,34 @@ void Lanes::Hough()
 		line(color_lines, Point(lines_1[i][0], lines_1[i][1]), Point(lines_1[i][2], lines_1[i][3]), Scalar(255,0,0), 3, 8);
 	imshow("lines_bisect",color_lines);
 	// imshow("lines_gray",img_gray);
+	waitKey(0);
+}
+
+void Lanes::control_points()
+{
+	Mat temp(img.rows, img.cols, CV_8UC1, Scalar(0));
+	for(int i = img.rows-1; i >= 10; i-=5)
+	{
+		if(i-10 < 0) break;
+		int left = 0,right = 0,c_l = 0, c_r = 0;
+		for(int j = i; j > i-10; j--)
+		{
+			if(j < 0) break;
+			for(int k = 0; k < img.cols/2; k++)
+			{
+				if(bisect.at<uchar>(j,k) > 100) { left += k; c_l++; }
+			}
+			for(int k = img.cols/2+1; k < img.cols; k++)
+			{
+				if(bisect.at<uchar>(j,k) > 100) { right += k; c_r++; }
+			}
+		}
+		if(c_l == 0 || c_r == 0) continue;
+		left /= c_l;
+		right /= c_r;
+		temp.at<uchar>(i-5,left) = 255;
+		temp.at<uchar>(i-5,right) = 255;
+	}
+	imshow("temp",temp);
 	waitKey(0);
 }
