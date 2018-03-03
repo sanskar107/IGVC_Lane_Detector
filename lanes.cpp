@@ -5,7 +5,9 @@
 #include <string>
 
 #define SUBSTRACTION_CONSTANT 30
-#define INTENSITY_TH 60
+#define INTENSITY_TH 50
+#define PI 3.14159265
+
 using namespace std;
 using namespace cv;
 
@@ -19,20 +21,23 @@ public:
 	void display();
 	void Intensity_adjust();
 	void Brightest_Pixel();
+	void Edge();
 };
 
 int main(int argc, char** argv)
 {
 	if(argc < 2) return 0;
 	Lanes L(argv[1]);
-	// L.Mix_Channel();
+	L.Mix_Channel();
 	// L.display();
 	// L.Intensity_distribution();
 	L.Intensity_adjust();
+	L.Edge();
 	// L.Intensity_distribution();
 	L.Mix_Channel();
 	// L.display();
 	L.Brightest_Pixel();
+	L.Edge();
 	return 0;
 
 }
@@ -111,7 +116,8 @@ void Lanes::Brightest_Pixel()
 		for(int j = 0; j < img.cols/2; j++)
 		{
 			if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
-			else img_gray.at<uchar>(i,j) = 255;
+			// else img_gray.at<uchar>(i,j) = 255;
+
 			if(img_gray.at<uchar>(i,j) > max)
 			{
 				max = img.at<uchar>(i,j);
@@ -124,7 +130,8 @@ void Lanes::Brightest_Pixel()
 		for(int j = img.cols/2 + 1; j < img.cols; j++)
 		{
 			if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
-			else img_gray.at<uchar>(i,j) = 255;
+			// else img_gray.at<uchar>(i,j) = 255;
+			
 			if(img_gray.at<uchar>(i,j) > max)
 			{
 				max = img.at<uchar>(i,j);
@@ -136,5 +143,27 @@ void Lanes::Brightest_Pixel()
 	}
 	imshow("bisect",bisect);
 	imshow("Threshold",img_gray);
+	waitKey(0);
+}
+
+void Lanes::Edge()
+{
+	Mat Gx,Gy;
+	Sobel(img_gray, Gx, -1, 1, 0, 3, CV_SCHARR);
+	Sobel(img_gray, Gy, -1, 0, 1, 3, CV_SCHARR);
+	// imshow("gx",Gx);
+	// imshow("gy",Gy);
+	for(int i = 0; i < img.rows; i++)
+		for(int j = 0; j < img.cols; j++)
+		{
+			int x = Gx.at<uchar>(i,j);
+			int y = Gy.at<uchar>(i,j);
+			float grad = atan((float)x / y) * 180.0/PI;
+			// cout<<grad<<'\t';
+			if(grad < 0) grad *= -1;
+			if(grad > 30 && (sqrt(x*x + y*y) > INTENSITY_TH)) img_gray.at<uchar>(i,j) = 255;
+			else img_gray.at<uchar>(i,j) = 0;
+		}
+	imshow("Angle Threshold", img_gray);
 	waitKey(0);
 }
