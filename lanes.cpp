@@ -32,18 +32,21 @@ int main(int argc, char** argv)
 {
 	if(argc < 2) return 0;
 	Lanes L(argv[1]);
+	L.Intensity_adjust();
 	L.Mix_Channel();
 	// L.display();
 	// L.Intensity_distribution();
-	L.Intensity_adjust();
-	L.Brightest_Pixel();
-	L.control_points();
-	L.Hough();
+
+	// L.Brightest_Pixel();
+	// L.control_points();
+	// L.Hough();
 	// L.Intensity_distribution();
-	L.Mix_Channel();
+	// L.Mix_Channel();
 	// L.display();
 	L.Edge();
-	L.Hough();
+	// L.Hough();
+	L.display();
+	L.Brightest_Pixel();
 	L.control_points();
 	return 0;
 
@@ -123,7 +126,7 @@ void Lanes::Brightest_Pixel()
 		for(int j = 0; j < img.cols/2; j++)
 		{
 			bisect.at<uchar>(i,j) = 0;
-			if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
+			// if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
 			// else img_gray.at<uchar>(i,j) = 255;
 
 			if(img_gray.at<uchar>(i,j) > max)
@@ -138,7 +141,7 @@ void Lanes::Brightest_Pixel()
 		for(int j = img.cols/2 + 1; j < img.cols; j++)
 		{
 			bisect.at<uchar>(i,j) = 0;
-			if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
+			// if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
 			// else img_gray.at<uchar>(i,j) = 255;
 			
 			if(img_gray.at<uchar>(i,j) > max)
@@ -150,7 +153,7 @@ void Lanes::Brightest_Pixel()
 		}
 		if(max > 100) bisect.at<uchar>(i,r) = 255;
 	}
-	Dilation();
+	// Dilation();
 	imshow("bisect",bisect);
 	imshow("Threshold",img_gray);
 	waitKey(0);
@@ -158,23 +161,57 @@ void Lanes::Brightest_Pixel()
 
 void Lanes::Edge()
 {
-	Mat Gx,Gy;
+	Mat Gx, Gy, Ga(img.rows,img.cols,CV_8UC1,Scalar(0)), Gb(img.rows,img.cols,CV_8UC1,Scalar(0)), Gc(img.rows,img.cols,CV_8UC1,Scalar(0)), Gd(img.rows,img.cols,CV_8UC1,Scalar(0));
+	equalizeHist(img_gray, img_gray);
+
 	Sobel(img_gray, Gx, -1, 1, 0, 3, CV_SCHARR);
 	Sobel(img_gray, Gy, -1, 0, 1, 3, CV_SCHARR);
 	// imshow("gx",Gx);
 	// imshow("gy",Gy);
+	
+	Mat temp = img_gray.clone();
+
+	int A[3][3] = {-1,0,1,-2,0,2,-1,0,1};
+	int B[3][3] = {-2,-1,0,-1,0,1,0,1,2};
+	int C[3][3] = {0,1,2,-1,0,1,-2,-1,0};
+	int D[3][3] = {1,2,1,0,0,0,-1,-2,-1};
+
 	for(int i = 0; i < img.rows; i++)
 		for(int j = 0; j < img.cols; j++)
 		{
-			int x = Gx.at<uchar>(i,j);
-			int y = Gy.at<uchar>(i,j);
-			float grad = atan((float)x / y) * 180.0/PI;
-			// cout<<grad<<'\t';
-			if(grad < 0) grad *= -1;
-			if(grad > 30 && (sqrt(x*x + y*y) > INTENSITY_TH)) img_gray.at<uchar>(i,j) = 255;
-			else img_gray.at<uchar>(i,j) = 0;
+			int sum_a, sum_b, sum_c, sum_d, count_a, count_b, count_c, count_d;
+			sum_a = sum_b = sum_c = sum_d = count_a = count_b = count_c = count_d = 0;
+			for(int m = -1; m < 2; m++)
+				for(int n = -1; n < 2; n++)
+				{
+					if(i+m < 0 || j+n < 0 || i+m >= img.rows || j+n >= img.cols) continue;
+					sum_a += img_gray.at<uchar>(i+m,j+n) * A[m+1][n+1];
+					sum_b += img_gray.at<uchar>(i+m,j+n) * B[m+1][n+1];
+					sum_c += img_gray.at<uchar>(i+m,j+n) * C[m+1][n+1];
+					sum_d += img_gray.at<uchar>(i+m,j+n) * D[m+1][n+1];
+					count_a += abs(A[m+1][n+1]);
+					count_b += abs(B[m+1][n+1]);
+					count_c += abs(C[m+1][n+1]);
+					count_d += abs(D[m+1][n+1]);
+				}
+			sum_a /= count_a; sum_b /= count_b; sum_c /= count_c; sum_d /= count_d;
+			Ga.at<uchar>(i,j) = sum_a; Gb.at<uchar>(i,j) = sum_b; Gc.at<uchar>(i,j) = sum_c; Gd.at<uchar>(i,j) = sum_d;
+
+			if(sqrt(sum_a*sum_a + sum_b*sum_b + sum_c*sum_c)/2 > INTENSITY_TH) temp.at<uchar>(i,j) = 255;
+			else temp.at<uchar>(i,j) = 0;
+			// int x = Gx.at<uchar>(i,j);
+			// int y = Gy.at<uchar>(i,j);
+			// float grad = atan((float)x / y) * 180.0/PI;
+			// // cout<<grad<<'\t';
+			// if(grad < 0) grad *= -1;
+			// if((sqrt(x*x + y*y) > INTENSITY_TH)) img_gray.at<uchar>(i,j) = 255;
+			// else img_gray.at<uchar>(i,j) = 0;
 		}
-	imshow("Angle Threshold", img_gray);
+	img_gray = temp;
+	// Canny()
+	imshow("edges",img_gray);
+	imshow("ga",Ga); imshow("gb",Gb); imshow("Gc",Gc); imshow("Gd", Gd);
+	// imshow("Gx", Gx); imshow("Gy",Gy);
 	waitKey(0);
 }
 
