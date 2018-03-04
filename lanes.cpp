@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	// L.display();
 	L.Edge();
 	// L.Hough();
-	L.display();
+	// L.display();
 	L.Brightest_Pixel();
 	L.control_points();
 	return 0;
@@ -155,7 +155,7 @@ void Lanes::Brightest_Pixel()
 	}
 	// Dilation();
 	imshow("bisect",bisect);
-	imshow("Threshold",img_gray);
+	// imshow("Threshold",img_gray);
 	waitKey(0);
 }
 
@@ -276,11 +276,11 @@ void Lanes::Hough()
 void Lanes::control_points()
 {
 	Mat temp(img.rows, img.cols, CV_8UC1, Scalar(0));
-	for(int i = img.rows-1; i >= 10; i-=5)
+	for(int i = img.rows-1; i >= 20; i-=5)
 	{
-		if(i-10 < 0) break;
+		if(i-20 < 0) break;
 		int left = 0,right = 0,c_l = 0, c_r = 0;
-		for(int j = i; j > i-10; j--)
+		for(int j = i; j > i-20; j--)
 		{
 			if(j < 0) break;
 			for(int k = 0; k < img.cols/2; k++)
@@ -295,9 +295,28 @@ void Lanes::control_points()
 		if(c_l == 0 || c_r == 0) continue;
 		left /= c_l;
 		right /= c_r;
-		temp.at<uchar>(i-5,left) = 255;
-		temp.at<uchar>(i-5,right) = 255;
+		temp.at<uchar>(i-10,left) = 255;
+		temp.at<uchar>(i-10,right) = 255;
 	}
-	imshow("temp",temp);
+	int flag_l = 0, flag_r = 0, x_l, y_l, x_r, y_r;
+	for(int i = img.rows; i > img.rows/3; i--)
+	{
+		for(int j = 0; j < img.cols/2; j++)
+		{
+			if(temp.at<uchar>(i,j) != 255) continue;
+			if(flag_l == 0) {flag_l = 1; x_l = j; y_l = i; continue; }
+			line(img, Point(x_l, y_l), Point(j, i), Scalar(255,0,0), 3, 8);
+			x_l = j; y_l = i;
+		}
+		for(int j = img.cols/2 + 1; j < img.cols; j++)
+		{
+			if(temp.at<uchar>(i,j) != 255) continue;
+			if(flag_r == 0) {flag_r = 1; x_r = j; y_r = i; continue; }
+			line(img, Point(x_r, y_r), Point(j, i), Scalar(0,0,255), 3, 8);
+			x_r = j; y_r = i;
+		}
+	}
+	imshow("points",temp);
+	imshow("lanes",img);
 	waitKey(0);
 }
