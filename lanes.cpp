@@ -60,6 +60,7 @@ Lanes::Lanes(string name)
 
 void Lanes::Mix_Channel()
 {
+	blur(img,img,Size(5,5));
 	for(int i = 0; i < img.rows; i++)
 		for(int j = 0; j < img.cols; j++)
 		{
