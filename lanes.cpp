@@ -26,6 +26,7 @@ public:
 	void Hough();
 	void Dilation();
 	void control_points();
+	void control_vanishing();
 };
 
 int main(int argc, char** argv)
@@ -48,6 +49,7 @@ int main(int argc, char** argv)
 	// L.display();
 	L.Brightest_Pixel();
 	L.control_points();
+	// L.control_vanishing();
 	return 0;
 
 }
@@ -129,10 +131,17 @@ void Lanes::Brightest_Pixel()
 			bisect.at<uchar>(i,j) = 0;
 			// if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
 			// else img_gray.at<uchar>(i,j) = 255;
-
-			if(img_gray.at<uchar>(i,j) > max)
+			int sum = 0, count = 0;
+			for(int m = i-1; m < i+2; m++)
+				for(int n = j-1; n < j+2; n++)
+				{
+					if(m < 0 || n < 0 || m >= img.rows || n >= img.cols) continue;
+					sum += img_gray.at<uchar>(m,n); count++;
+				}
+			if(count != 0) sum /= count;
+			if(sum > max)
 			{
-				max = img.at<uchar>(i,j);
+				max = sum;
 				l = j;
 			}
 			
@@ -144,10 +153,17 @@ void Lanes::Brightest_Pixel()
 			bisect.at<uchar>(i,j) = 0;
 			// if(img_gray.at<uchar>(i,j) < INTENSITY_TH) img_gray.at<uchar>(i,j) = 0;
 			// else img_gray.at<uchar>(i,j) = 255;
-			
-			if(img_gray.at<uchar>(i,j) > max)
+			int sum = 0, count = 0;
+			for(int m = i-1; m < i+2; m++)
+				for(int n = j-1; n < j+2; n++)
+				{
+					if(m < 0 || n < 0 || m >= img.rows || n >= img.cols) continue;
+					sum += img_gray.at<uchar>(m,n); count++;
+				}
+			if(count != 0) sum /= count;
+			if(sum > max)
 			{
-				max = img.at<uchar>(i,j);
+				max = sum;
 				r = j;
 			}
 			
@@ -321,3 +337,8 @@ void Lanes::control_points()
 	imshow("lanes",img);
 	waitKey(0);
 }
+
+// void Lanes::control_vanishing()
+// {
+
+// }
