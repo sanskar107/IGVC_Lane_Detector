@@ -309,11 +309,11 @@ void Lanes::control_points()
 				if(bisect.at<uchar>(j,k) > 100) { right += k; c_r++; }
 			}
 		}
-		if(c_l == 0 || c_r == 0) continue;
-		left /= c_l;
-		right /= c_r;
-		temp.at<uchar>(i-10,left) = 255;
-		temp.at<uchar>(i-10,right) = 255;
+		if(c_l == 0 && c_r == 0) continue;
+		if(c_l != 0) left /= c_l;
+		if(c_r != 0) right /= c_r;
+		if(c_l != 0) temp.at<uchar>(i-10,left) = 255;
+		if(c_r != 0) temp.at<uchar>(i-10,right) = 255;
 	}
 	int flag_l = 0, flag_r = 0, x_l, y_l, x_r, y_r;
 	for(int i = img.rows; i > img.rows/3; i--)
