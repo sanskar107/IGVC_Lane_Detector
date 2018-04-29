@@ -27,6 +27,7 @@ public:
 	void Dilation();
 	void control_points();
 	void control_vanishing();
+	void remove_grass();
 };
 
 int main(int argc, char** argv)
@@ -35,6 +36,7 @@ int main(int argc, char** argv)
 	Lanes L(argv[1]);
 	L.Intensity_adjust();
 	L.Mix_Channel();
+
 	// L.display();
 	// L.Intensity_distribution();
 
@@ -44,6 +46,7 @@ int main(int argc, char** argv)
 	// L.Intensity_distribution();
 	// L.Mix_Channel();
 	// L.display();
+	L.remove_grass();
 	L.Edge();
 	// L.Hough();
 	// L.display();
@@ -116,7 +119,37 @@ void Lanes::Intensity_adjust()
 				if(temp < 0) temp = 0;
 				img.at<Vec3b>(i,j)[k] = temp;
 			}
-	imshow("Filtered Image", img);
+	// imshow("Filtered Image", img);
+	// waitKey(0);
+}
+
+void Lanes::remove_grass()
+{
+	// imshow("cv2", img);
+	// waitKey(0);
+	equalizeHist(img_gray, img_gray);
+	Mat non_grass = img.clone();
+	for(int i = 0; i < img.rows; i++)
+		for(int j = 0; j < img.cols; j++)
+		{
+			if(img_gray.at<uchar>(i,j) < 100)
+			{
+				non_grass.at<Vec3b>(i,j) = {0, 0, 0};
+				img_gray.at<uchar>(i,j) = 0;
+			}
+			else
+			{
+				for(int k = 0; k < 3; k++)
+					if(non_grass.at<Vec3b>(i,j)[k] < 100)
+					{
+						non_grass.at<Vec3b>(i,j) = {0, 0, 0};
+						img_gray.at<uchar>(i,j) = 0;
+						break;
+					}
+			}
+		}
+	img = non_grass;
+	imshow("remove_grass", non_grass);
 	waitKey(0);
 }
 
