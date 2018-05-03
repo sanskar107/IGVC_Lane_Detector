@@ -65,6 +65,7 @@ public:
 	quadratic RANSAC(vector<Point>);
 	void shift_parabola(quadratic ,int );
 	int IsValid(Mat , int, int );
+	void remove_grass();
 };
 
 int main(int argc, char** argv)
@@ -82,6 +83,7 @@ int main(int argc, char** argv)
 
 	L.Intensity_adjust();
 	L.Mix_Channel();
+
 		// L.display();
 		//L.Intensity_distribution();
 
@@ -91,6 +93,17 @@ int main(int argc, char** argv)
 		// L.Intensity_distribution();
 		// L.Mix_Channel();
 		// L.display();
+
+	// L.display();
+	// L.Intensity_distribution();
+
+	// L.Brightest_Pixel();
+	// L.control_points();
+	// L.Hough();
+	// L.Intensity_distribution();
+	// L.Mix_Channel();
+	// L.display();
+	L.remove_grass();
 	L.Edge();
 	L.topview(0);
 	L.topview(1);
@@ -184,6 +197,38 @@ void Lanes::Intensity_adjust()  // the top part of frame may have some intensity
 			}
 	imshow("Filtered Image", img);
 	//waitKey(0);
+	// imshow("Filtered Image", img);
+	// waitKey(0);
+}
+
+void Lanes::remove_grass()
+{
+	// imshow("cv2", img);
+	// waitKey(0);
+	equalizeHist(img_gray, img_gray);
+	Mat non_grass = img.clone();
+	for(int i = 0; i < img.rows; i++)
+		for(int j = 0; j < img.cols; j++)
+		{
+			if(img_gray.at<uchar>(i,j) < 100)
+			{
+				non_grass.at<Vec3b>(i,j) = {0, 0, 0};
+				img_gray.at<uchar>(i,j) = 0;
+			}
+			else
+			{
+				for(int k = 0; k < 3; k++)
+					if(non_grass.at<Vec3b>(i,j)[k] < 100)
+					{
+						non_grass.at<Vec3b>(i,j) = {0, 0, 0};
+						img_gray.at<uchar>(i,j) = 0;
+						break;
+					}
+			}
+		}
+	img = non_grass;
+	imshow("remove_grass", non_grass);
+	waitKey(0);
 }
 
 void Lanes::Brightest_Pixel_col()
