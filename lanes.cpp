@@ -863,5 +863,5 @@ void Lanes::curve_fitting()
 	}
     plot_quad(left_fy,0);
     plot_quad(right_gy,1);
-	imshow("parabola_fiited_topview",top_view_rgb);
+	imshow("parabola_fitted_topview",top_view_rgb);
 }
