@@ -150,14 +150,14 @@ void Lanes::Mix_Channel()
 			if(temp > 255) temp=255;
 			img_gray.at<uchar>(i,j) = (unsigned int)temp;
 		}
-	imshow("Mix_Chann",img_gray);
+	//imshow("Mix_Chann",img_gray);
 		//waitKey(0);
 }
 
 void Lanes::display()
 {
-	imshow("input", img);
-	imshow("Mix_Channel", img_gray);
+	//imshow("input", img);
+	//imshow("Mix_Channel", img_gray);
 	waitKey(0);
 }
 
@@ -175,7 +175,7 @@ void Lanes::Intensity_distribution()
 		sum /= img.cols;
 		dist.at<uchar>(256-sum,i) = 255;
 	}
-	imshow("Intensity_distribution",dist);
+	//imshow("Intensity_distribution",dist);
 	//waitKey(0);
 }
 
@@ -195,7 +195,7 @@ void Lanes::Intensity_adjust()  // the top part of frame may have some intensity
 				if(temp < 0) temp = 0;
 				img.at<Vec3b>(i,j)[k] = (unsigned int )temp;
 			}
-	imshow("Filtered Image", img);
+	//imshow("Filtered Image", img);
 	//waitKey(0);
 	// imshow("Filtered Image", img);
 	// waitKey(0);
@@ -227,8 +227,8 @@ void Lanes::remove_grass()
 			}
 		}
 	img = non_grass;
-	imshow("remove_grass", non_grass);
-	waitKey(0);
+	//imshow("remove_grass", non_grass);
+	//waitKey(0);
 }
 
 void Lanes::Brightest_Pixel_col()
@@ -434,7 +434,7 @@ void Lanes::topview(int flag)
         	top_view=destination.clone();
         else
         	top_view_rgb=destination.clone();
-        imshow("Result", destination);
+        //imshow("Result_topview", destination);
         //waitKey(200);
 
 }
@@ -478,7 +478,7 @@ void Lanes::Edge()
    	i = 1;
    	// while(i--)
     // dilate(t1,t1,element);
-	imshow("thesh",img_gray);
+	//imshow("thesh",img_gray);
 	//Canny(img_gray,img_gray,50,100,3,0);
 	findContours(t1,contours,heirarchy,CV_RETR_TREE,CV_CHAIN_APPROX_NONE);
 	float resize_factor=1.5;
@@ -595,8 +595,8 @@ void Lanes::Edge()
 	line(img,Point(0,img.rows/3),Point(img.cols-1,img.rows/3), Scalar(255,0,0), 2, CV_AA);
 	top_view=img_gray.clone();
 	
-	imshow("erode",img_gray);
-	imshow("t",t);
+	//imshow("erode",img_gray);
+	//imshow("t",t);
 	
 }
 
@@ -629,13 +629,13 @@ void Lanes::Hough()
 	HoughLinesP(bisect, lines, 3.0, 2.0*CV_PI/180, 2);
 	for(int i = 0; i < lines.size(); i++)
 		line(color_lines, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8);
-	imshow("lines_bisect",color_lines);
-	waitKey(0);
+	//imshow("lines_bisect",color_lines);
+	//waitKey(0);
 	vector<Vec4i> lines_1;
 	HoughLinesP(img_gray, lines_1, 3.0, 2.0*CV_PI/180, 30);
 	for(int i = 0; i < lines_1.size(); i++)
 		line(color_lines, Point(lines_1[i][0], lines_1[i][1]), Point(lines_1[i][2], lines_1[i][3]), Scalar(255,0,0), 3, 8);
-	imshow("lines_bisect",color_lines);
+	//imshow("lines_bisect",color_lines);
 	// imshow("lines_gray",img_gray);
 	//waitKey(0);
 }
@@ -692,7 +692,7 @@ void Lanes::control_points()
 		}
 	}
 	curves=temp.clone();
-	imshow("points",temp);
+	//imshow("points",temp);
 	//imshow("lanes",img);
 	//waitKey(1);
 }
@@ -863,5 +863,5 @@ void Lanes::curve_fitting()
 	}
     plot_quad(left_fy,0);
     plot_quad(right_gy,1);
-	imshow("Yeeeaaaah",top_view_rgb);
+	imshow("parabola_fiited_topview",top_view_rgb);
 }
