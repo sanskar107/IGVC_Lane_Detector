@@ -28,26 +28,25 @@
 
 #define W 400
 #define SUBSTRACTION_CONSTANT 30
-#define INTENSITY_TH 40
+#define INTENSITY_TH 180
 #define PI 3.14159265
 
-#define TH_REM_GRASS 30
-#define TH_DOT 30
-#define TH_SMALL_SUPERPIXEL 5
-#define TH_MIN_WHITE_REGION 0.3
-#define NUM_ITER 100
+#define TH_REM_GRASS 180
+#define TH_DOT 190
+#define TH_SMALL_SUPERPIXEL 20
+#define TH_MIN_WHITE_REGION 0.7
+#define NUM_ITER 1000
 #define PPM 133.33
 
-#define THRESHOLD_FOR_ANY_LANE 2
-#define LANE_THRESHOLD 2
+#define THRESHOLD_FOR_ANY_LANE 210
+#define LANE_THRESHOLD 210
 
 struct svm_model* model;
 struct svm_node *x_space;
 struct svm_problem prob;
 struct svm_parameter param;
 
-int wide = 375;
-int show = 1;
+int wide = 700;
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 

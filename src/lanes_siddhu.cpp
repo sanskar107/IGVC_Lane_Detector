@@ -6,7 +6,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w);
 int counter = 0;
 // int main(int argc, char** argv)
 // {
-// 	cout<<"running"<<endl;
+// 	//cout<<"running"<<endl;
 // 	ros::init(argc, argv, "image_converter");
 // 	ros::NodeHandle nh_;
 
@@ -22,7 +22,7 @@ int counter = 0;
 // 		//Mat given=imread(argv[1],1);
 // 		Mat frame;
 // 		cap>>frame;
-// 		if(!frame.data) cout<<"null";
+// 		if(!frame.data) //cout<<"null";
 // 		Lanes L(frame);     // L --> frame
 // 		//L.Intensity_distribution();
 // 		fr++;
@@ -73,19 +73,19 @@ int counter = 0;
 // 	if(counter > 1000) counter = 0;
 // 	// if(counter % 20 != 0) return;
 // 	end = clock();;
-// 	// cout<<"\nCV_BRIDGE = "<<(end - begin)/1000.0;
+// 	// //cout<<"\nCV_BRIDGE = "<<(end - begin)/1000.0;
 	
 // 	begin = clock();
 // 	Lanes L(img);
 // 	end = clock();
-// 	// cout<<"\nconstructor = "<<(end - begin)/1000.0;
+// 	// //cout<<"\nconstructor = "<<(end - begin)/1000.0;
 
-// 	// cout<<img.rows<<" img rowa"<<endl;
+// 	// //cout<<img.rows<<" img rowa"<<endl;
 // 	// L.Intensity_adjust();
 // 	begin = clock();
 // 	L.Mix_Channel();
 // 	end = clock();
-// 	// cout<<"\nMix channel = "<<(end - begin)/1000.0;
+// 	// //cout<<"\nMix channel = "<<(end - begin)/1000.0;
 
 // 	L.remove_grass();
 // 	L.topview();
@@ -93,7 +93,7 @@ int counter = 0;
 // 	begin = clock();
 // 	L.parabola();
 // 	end = clock();
-// 	// cout<<"\nParabola = "<<(end - begin)/1000.0;
+// 	// //cout<<"\nParabola = "<<(end - begin)/1000.0;
 
 // }
 
@@ -103,7 +103,7 @@ int counter = 0;
 int main(int argc, char** argv)
 {
 
-	cout<<"running"<<endl;
+	//cout<<"running"<<endl;
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
@@ -146,20 +146,20 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	if(img.rows < 0) return;
 	// video.write(img);
 	// end = clock();;
-	// cout<<"\nCV_BRIDGE = "<<(end - begin)/1000.0;
+	// //cout<<"\nCV_BRIDGE = "<<(end - begin)/1000.0;
 	
 	// begin = clock();
 	Lanes L(img);
 	// end = clock();
-	// cout<<"\nconstructor = "<<(end - begin)/1000.0;
+	// //cout<<"\nconstructor = "<<(end - begin)/1000.0;
 
-	// cout<<img.rows<<" img rowa"<<endl;
+	// //cout<<img.rows<<" img rowa"<<endl;
 	// L.Intensity_adjust();
 	// begin = clock();
 	// L.remove_grass();
 	L.Mix_Channel();
 	// end = clock();
-	// cout<<"\nMix channel = "<<(end - begin)/1000.0;
+	// //cout<<"\nMix channel = "<<(end - begin)/1000.0;
 
 	// L.remove_grass();
 	L.topview();
@@ -167,7 +167,7 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	// begin = clock();
 	L.parabola();
 	// end = clock();
-	// cout<<"\nParabola = "<<(end - begin)/1000.0;
+	// //cout<<"\nParabola = "<<(end - begin)/1000.0;
 }
 
 
@@ -175,7 +175,7 @@ Lanes::Lanes(Mat img)
 {
 	resize(img, img, Size(960, 600));
 	// imshow("img", img);
-	// cout<<img.rows<<' '<<img.cols<<endl;
+	// //cout<<img.rows<<' '<<img.cols<<endl;
 	this->img = img;
 	top_view_rgb=img.clone();
 	cvtColor(this->img, this->img_gray,CV_BGR2GRAY);
@@ -293,18 +293,19 @@ void Lanes::topview()
 	
 	// Mat h = (Mat_<float>(3, 3)<< 3.665649454142774, 5.249642779023947, -2017.634107745852, 0.1725239771632309, 10.74704553239514, -3191.00361122947, 7.864729235797308e-05, 0.006494804637725546, 1);
 	Mat h = (Mat_<float>(3, 3)<<0.9524258265572764, 1.932259226972684, 71.36069918907818, 0.08413921815847476, 3.18697351467409, -77.56300977045593, -2.409361384497643e-05, 0.00403298641581695, 1);
-
 	// float scale_factor = 3.4;
-	// cout<<top_view.rows<<' '<<top_view.cols<<endl;
+	// //cout<<top_view.rows<<' '<<top_view.cols<<endl;
 	// resize(top_view, top_view, Size(960*2, 1200));
 	// resize(top_view_rgb, top_view_rgb, Size(960*2, 1200));
 
-	warpPerspective(top_view, top_view, h, Size(960,600));
-	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960,600));
+	warpPerspective(top_view, top_view, h, Size(960, 600));
+	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960, 600));
 	// resize(top_view, top_view, Size(960, 600));
 	// resize(top_view_rgb, top_view_rgb, Size(960, 600));
 
-	// imshow("top", top_view_rgb);
+
+
+	// imshow("top", top_view);
 	// waitKey(10);
 
 }
@@ -393,7 +394,7 @@ void Lanes::Edge()
 	//roi_img now contains all the images in it which are to be predicted for lebelling
 	for(int i = 0;i<roi_img.size();i++) {
 		Rect rect = roi[i];
-		//cout << "Check" << endl;
+		////cout << "Check" << endl;
 		Point tl = rect.tl(),br = rect.br();
 		rectangle(img,tl,br,Scalar(0,0,0),2,8,0);
 	//SVM CODE
@@ -425,13 +426,13 @@ void Lanes::Edge()
 		{
 			x_space[j].index=k+1; //index of value
 			x_space[j].value=descriptorsValues[k]; //value
-			// cout<<"x_space["<<j<<"].index = "<<x_space[j].index<<endl;
-			// cout<<"x_space["<<j<<"].value = "<<x_space[j].value<<endl;
+			// //cout<<"x_space["<<j<<"].index = "<<x_space[j].index<<endl;
+			// //cout<<"x_space["<<j<<"].value = "<<x_space[j].value<<endl;
 		}
 		x_space[j].index=-1;//state the end of data vector
 		x_space[j].value=0;
-		// cout<<"x_space["<<j<<"].index = "<<x_space[j].index<<endl;
-		// cout<<"x_space["<<j<<"].value = "<<x_space[j].value<<endl;
+		// //cout<<"x_space["<<j<<"].index = "<<x_space[j].index<<endl;
+		// //cout<<"x_space["<<j<<"].value = "<<x_space[j].value<<endl;
 		j++;
 
 	}
@@ -482,15 +483,11 @@ void Lanes::parabola()
 			if(top_view.at<uchar>(i,j) > TH_DOT)
 				for(int k = 0; k < 3; k++)
 					temp.at<Vec3b>(i,j)[k] = 255;
-
-	Mat element = getStructuringElement(MORPH_RECT,
-                                       Size( 2*1 + 1, 2*1+1 ),
-                                       Point(1,1 ));
-    dilate(temp, temp, element);
-
-
-	// imshow("temp", temp);
-	// waitKey(5);
+	if(show)
+	{
+		imshow("temp", temp);
+		waitKey(5);
+	}
 	// IplImage im = temp;
 	// IplImage* image = &im;
 	// image = cvCreateImage(cvSize(top_view.cols, top_view.rows), 8, 3);
@@ -510,7 +507,7 @@ void Lanes::parabola()
     // slic.create_connectivity(lab_image);
     
     // end = clock();
-    // cout<<"\nSlic = "<<(end - start)/1000.0;
+    // //cout<<"\nSlic = "<<(end - start)/1000.0;
     // /* Display the contours and show the result. */
     // slic.display_contours(image, CV_RGB(255,0,0));
     // cvShowImage("slic", image);
@@ -534,10 +531,13 @@ void Lanes::parabola()
 	segmenter.Tool_GetMarkedImg();
 	Mat marked(temp.rows, temp.cols, CV_8UC4, segmenter.markedImg);
 	Mat mask(temp.rows, temp.cols, CV_32SC1, segmenter.segMask);
-	// imshow("img super pixel cluster marked for threshold settings", marked);
-	// waitKey(5);
+	if(show)
+	{
+		imshow("img super pixel cluster marked for threshold settings", marked);
+		waitKey(5);
+	}
 	// end = clock();
-	// cout<<"segmented\n";
+	// //cout<<"segmented\n";
 	// segmenter.~FastImgSeg();
 
 	Mat slic_img = temp.clone();//cvarrToMat(image);
@@ -548,11 +548,12 @@ void Lanes::parabola()
 	for(int i = 0; i < mask.rows; i++)
 		for(int j = 0; j < mask.cols; j++)
 			if((int)mask.at<int>(i, j) > max) max = (int)mask.at<int>(i, j);
-	// cout<<max;
+	// //cout<<max;
 	int* count_pix = new int[max + 1];
 	int* count_col = new int[max + 1];
 	for(int i = 0; i <= max; i++)
 		count_pix[i] = count_col[i] = 0;
+	vector<vector<Point> > cluster_points(max+1);
 	for(int i = 0; i < top_view.rows; i++)
 	{
 		for(int j = 0; j < top_view.cols; j++)
@@ -561,59 +562,85 @@ void Lanes::parabola()
 			int idx = mask.at<int>(i/2,j/2);
 			count_pix[idx]++;
 			if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
+			cluster_points[idx].push_back(Point(j,i));
 		}
 	}
-	// cout<<"counted\n";
+	// //cout<<"counted\n";
 	// waitKey(10);
 	// for(int i = 0; i <= max; i++)
 	// {
-	// 	cout<<count_col[i]/(count_pix[i]*1.0)<<' ';
+	// 	//cout<<count_col[i]/(count_pix[i]*1.0)<<' ';
 	// }
 	vector<Point> P;
-	// cout<<top_view.rows<<' '<<top_view.cols<<endl;
+	// //cout<<top_view.rows<<' '<<top_view.cols<<endl;
 	Mat dot(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));
 	Mat new_dot(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));  
 
-	for(int i = 0; i < top_view.rows; i++)
-	{
-		for(int j = 0; j < top_view.cols; j++)
-		{
-			// if(!i%10 && !j%10)
-			// cout<<i<<' '<<j<<endl;
-			// if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
+	// for(int i = 0; i < top_view.rows; i++)
+	// {
+	// 	for(int j = 0; j < top_view.cols; j++)
+	// 	{
+	// 		// if(!i%10 && !j%10)
+	// 		// //cout<<i<<' '<<j<<endl;
+	// 		// if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
 			
-			int idx = mask.at<int>(i/2,j/2);
-			//cout<<"Idx : "<<idx<<endl;
-			if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
-			// cout<<(count_col[idx]/(count_pix[idx]*1.0))<<endl;
-			if(count_pix[idx] == 0) continue;
-			if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
+	// 		int idx = mask.at<int>(i/2,j/2);
+	// 		////cout<<"Idx : "<<idx<<endl; 
+	// 		if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
+	// 		// //cout<<(count_col[idx]/(count_pix[idx]*1.0))<<endl;
+	// 		if(count_pix[idx] == 0) continue;
+	// 		if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
 
-			// circle(dot, Point(j, i),3 ,Scalar(255),-1,1,0);
-			dot.at<uchar>(i, j) = 255;
-			int x = j;
-			int y = top_view.rows - i;
+	// 		// circle(dot, Point(j, i),3 ,Scalar(255),-1,1,0);
+	// 		dot.at<uchar>(i, j) = 255;
+	// 		int x = j;
+	// 		int y = top_view.rows - i;
+	// 		P.push_back(Point(x, y));
+	// 		count_pix[idx] = 0;
+	// 	}
+	// 	// //cout<<i<<endl;
+	// }
+
+	int QUANTA = (int)sqrt(temp.rows*temp.cols*10/max);
+	for(int idx=0;idx<max;idx++)
+	{
+		//cout<<"&&&&&&&&&&&&&&&&&&"<<endl;
+		if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;  // if very small cluster
+		//cout<<"////////////////////"<<endl;
+		//cout<<"count col = "<<count_col[idx]<<endl;
+		if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;  // proportion of white pixels in a cluster
+		//cout<<"\\\\\\\\\\\\\\\\\\\\\\"<<endl;
+		int req_points = cluster_points[idx].size()/QUANTA;  // generating variable number of points from a cluster
+		//cout<<"req = "<<req_points<<" index size = "<<cluster_points[idx].size()<<endl;
+		for(int i=0;i<=req_points;i++)
+		{
+			int point_index = random()%cluster_points[idx].size();
+			int x = cluster_points[idx][point_index].x;
+			int y = top_view.rows - cluster_points[idx][point_index].y;
+			//cout<<"$$$$$$$$$$$$$$$$$"<<endl;
+			dot.at<uchar>(cluster_points[idx][point_index].y,cluster_points[idx][point_index].x)=255;
 			P.push_back(Point(x, y));
-			count_pix[idx] = 0;
 		}
-		// cout<<i<<endl;
 	}
+
 	cout<<"P size = "<<P.size()<<endl;
 
 	// for(int i = 0; i < P.size(); i++)
-	// 	cout<<P[i].x<<' '<<P[i].y<<endl;
-	// imshow("dotted_condom", dot);
-	// waitKey(5);
-
+	// 	//cout<<P[i].x<<' '<<P[i].y<<endl;
+	if(show)
+	{
+		imshow("ransac points", dot);
+		waitKey(4);
+	}
 	int flag_no_lane = 0;
 
 	vector<double> way;
 
 	float a_gl = 1, lam_gl = 1, lam2_gl = 1, w_gl = 1;
 	// int flag_mario = 0;
-	if(P.size() < 6)
+	if(P.size() < 30)
 	{
-		cout<<"\nNot enough points";
+		//cout<<"\nNot enough points";
         
 		//when no lane
         w_gl = 10000;
@@ -666,7 +693,7 @@ void Lanes::parabola()
 				}
 			}	
 		}
-		// cout<<i<<endl;
+		// //cout<<i<<endl;
 		// if(ran_points[2].x - ran_points[1].x < 100)
 		// {
 		// 	i--;
@@ -684,15 +711,15 @@ void Lanes::parabola()
 		// }
 
 		int score_loc = 0;/*, comm_count = 0;*/
-                int score_l_loc = 0, score_r_loc = 0;
+        int score_l_loc = 0, score_r_loc = 0;
 		float* param = parabola_params(ran_points);
 		float a = param[0], lam = param[1], lam2 = param[2], w = param[3];
 		if(isnan(w)) w = 15000;
-		// cout<<"sss "<<w<<endl;
+		// //cout<<"sss "<<w<<endl;
 		if(!IsAllowed(lam, a, lam2, w, top_view.rows, top_view.cols)) continue;
 		if(!flag_width)
 		{
-			cout<<"%%%%%%"<<w<<endl;
+			//cout<<"%%%%%%"<<w<<endl;
 			width_lanes=w;
 			flag_width=1;
 		} 
@@ -736,7 +763,7 @@ void Lanes::parabola()
                                 }
                         } 
 
-			// cout<<score_loc<<endl;
+			// //cout<<score_loc<<endl;
 		}
 		if(score_loc>score_gl)
 		{
@@ -752,7 +779,7 @@ void Lanes::parabola()
 			p2_g = p2;
 			p3_g = p3;
 			p4_g = p4;
-			cout<<score_gl<<'\t';
+			//cout<<score_gl<<'\t';
 			// comm_count_gl = comm_count;
 		}
 	}
@@ -771,7 +798,7 @@ void Lanes::parabola()
                 flag_no_lane = 1; 
         }
 
-        //when one lane only
+        // when one lane only
         // else if (score_l_gl < LANE_THRESHOLD || score_r_gl < LANE_THRESHOLD) {
         //         w_gl = 10000;
 
@@ -810,17 +837,17 @@ void Lanes::parabola()
 	// way.push_back(0.1);
 	// way.push_back(0.1);
 	// way.push_back(0.1);
-	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
-	cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
+	//cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
+	//cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl; 
 	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
 	arrowedLine(dot, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(255), 3);
 
 	// circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
 	// circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
 
-	// imshow("top view rgb with dot showing waypoint", top_view_rgb);
+	imshow("top view rgb with dot showing waypoint", top_view_rgb);
 	// imshow("top view grey for laser scan", new_dot);
-	// waitKey(2);
+	waitKey(3);
 
     //set up transform
     tf::StampedTransform transform;
@@ -852,7 +879,7 @@ void Lanes::parabola()
 	waypoint.pose.position.y = -1*(way[0] - top_view.cols/2)/PPM/* + transform.getOrigin().y()*/;
 	waypoint.pose.position.z = 0 ;//+ transform.getOrigin().z();
 	float theta = (way[2] - PI/2) /*+ atan2(transform.getOrigin().y(),transform.getOrigin().x())*/;
-	cout<<"theta = "<<way[2]<<endl;
+	//cout<<"theta = "<<way[2]<<endl;
 
 	tf::Quaternion frame_qt = tf::createQuaternionFromYaw(theta);
 	waypoint.pose.orientation.x = frame_qt.x();
@@ -873,15 +900,8 @@ void Lanes::parabola()
 	// waypoint.pose.orientation.w = frame_qt.w();
 	
 	counter++;
-	if(counter > 1000)
-		counter = 0;
-
-	if (abs(w) > top_view_rgb.cols)
-		if (counter % 2 != 0) return;
-		else;
-
-	else if(counter % 8 != 0) return;
-
+	if(counter > 1000) counter = 0;
+	if(counter % 8 != 0) return;
 
 
 	waypoint.header.frame_id = "base_link";
@@ -893,11 +913,15 @@ void Lanes::parabola()
 
 	lanes_pub.publish(imageConvert(new_dot));
 
+
 	waypoint_pub.publish(waypoint);
-	cout<<"Published\n";
-	// imshow("Result showing dot image", dot);
+	//cout<<"Published\n";
+	if(show)
+	{
+		imshow("Result showing dot image", dot);
 	// imshow("Res2", top_view_rgb);
-	// waitKey(10);
+		waitKey(5);
+	}
 }
 
 float* Lanes::parabola_params(Point *points)   //mode: 1-6 => llr,lrl,rll,lrr,rlr,rrl
@@ -921,7 +945,7 @@ float* Lanes::parabola_params(Point *points)   //mode: 1-6 => llr,lrl,rll,lrr,rl
 	p3 = points[2];
 	p4 = points[3];
 
-	// cout<<p1.x<<"  "<<p1.y<<"  "<<p2.x<<"  "<<p2.y<<"  "<<p3.x<<"  "<<p3.y<<"  "<<p4.x<<"  "<<p4.y<<"  "<<endl;
+	// //cout<<p1.x<<"  "<<p1.y<<"  "<<p2.x<<"  "<<p2.y<<"  "<<p3.x<<"  "<<p3.y<<"  "<<p4.x<<"  "<<p4.y<<"  "<<endl;
 
 	param[0] = (pow(p1.y,2) * p2.x - pow(p2.y,2)*p1.x)/((pow(p1.y,2)*1.0 - pow(p2.y,2)*1.0)) ; // a
 	param[1] = pow(p1.y,2)/((p1.x*1.0 - param[0]*1.0));                                        // lambda1
@@ -936,7 +960,7 @@ float* Lanes::parabola_params(Point *points)   //mode: 1-6 => llr,lrl,rll,lrr,rl
 
 bool IsAllowed(float lam1,float a,float lam2,float w,int rows,int cols)
 {
-	if(fabs(w)>200000)return 1;	//Single lane
+	if(fabs(w)>1000)return 1;	//Single lane
 	else if(abs(w)<100)return 0;	//w is very small
 	else
 	{
@@ -946,7 +970,7 @@ bool IsAllowed(float lam1,float a,float lam2,float w,int rows,int cols)
 			{
 				int x1=((i*i)/lam1)+a;
 				int x2=((i*i)/lam2)+a+w;
-				if(abs(x1-x2)<100)return 0;
+				if(abs(x1-x2)<200)return 0;
 			}
 		}
 		else
@@ -955,7 +979,7 @@ bool IsAllowed(float lam1,float a,float lam2,float w,int rows,int cols)
 			{
 				int y1=sqrt(lam1*(i-a));
 				int y2=sqrt(lam2*(i-a-w));
-				if(abs(y1-y2)<100)return 0;
+				if(abs(y1-y2)<200)return 0;
 			}
 		}
 	}
@@ -1061,7 +1085,7 @@ bool is_bottom_at_left (Mat img, float a) {
 
 vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 {
-	float range = 2;
+	float range = 1.2;
 	float offset = 0;
 	if(a >= img.cols/2 && (a + w) >= img.cols/2)
 		w = 10001;
@@ -1107,15 +1131,12 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 		//calculate waypoint if left lane
 		if(!is_lane_left)
 		{
-			cout << "only right lane visible\n";
+			//cout << "only right lane visible\n";
 		
 			float y = range*PPM;
 			float x = pow((range - offset)*PPM, 2)/lam1 + a - wide/2;
-			// way.push_back(x);			
-			// way.push_back(y); 
-			way.push_back(img.cols/2);			
-			way.push_back(100); 
-
+			way.push_back(x);			
+			way.push_back(y); 
 			float grad = heading(img, a, lam1); //	lam1/((range - offset)*2*PPM);
 			//grad = atan(grad);
 			// grad = grad < 0 ? PI + grad : grad;
@@ -1126,15 +1147,12 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 		//calculate waypoint if right lane
 		else
 		{
-				cout<<"only left lane visible\n";
+				//cout<<"only left lane visible\n";
 		
 			float y = range*PPM;
 				float x = pow((range - offset)*PPM, 2)/lam1 + a + wide/2;
-				// way.push_back(x);
-				// way.push_back(y);
-				way.push_back(img.cols/2);			
-				way.push_back(100); 
-
+				way.push_back(x);
+				way.push_back(y);
 				float grad = heading(img, a, lam1);//	lam1/((range - offset)*2*PPM);
 				// grad = atan(grad);
 				// grad = grad < 0 ? PI + grad : grad;
@@ -1149,7 +1167,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	//two lanes
 	else
 	{
-        cout<<"both lane visible\n";
+        //cout<<"both lane visible\n";
 		
                 first_frame=false;
 		float temp = pow((range - offset)*PPM, 2)/lam1 + a;

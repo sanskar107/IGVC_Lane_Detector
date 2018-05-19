@@ -63,8 +63,9 @@ cuda_add_library(gSLICr_lib
 
 target_link_libraries(gSLICr_lib ${CUDA_LIBRARY})
 
-add_executable(lanes src/lanes.cpp)
+#add_executable(lanes src/lanes.cpp)
 #add_executable(laserScan2mat src/laserScan2mat.cpp)
+add_executable(lanes src/lanes.cpp)
 
 add_library(svm include/lane_detector/svm.cpp)
 

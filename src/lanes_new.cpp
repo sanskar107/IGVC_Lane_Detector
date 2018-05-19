@@ -1,4 +1,4 @@
-#include "../include/lane_detector/lanes.hpp"
+#include "../include/lane_detector/lanes_new.hpp"
 
 // typedef std::chrono::high_resolution_clock::time_point TimeVar;	
 vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w);
@@ -40,7 +40,7 @@ int counter = 0;
 // 		// L.topview(1);
 // 			// L.Hough();
 // 			// L.display();
-/// 		// L.Brightest_Pixel_col();
+// 		// L.Brightest_Pixel_col();
 // 		// L.Brightest_Pixel_row();
 // 		// L.control_points();
 // 		// L.curve_fitting();
@@ -103,20 +103,28 @@ int counter = 0;
 int main(int argc, char** argv)
 {
 
+	for(int i = 0; i < 3; i++)
+	{
+		way_avg[i].push_back(0);
+		way_avg[i].push_back(0);
+		way_avg[i].push_back(0);
+
+	}
+
 	cout<<"running"<<endl;
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
 	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 1);
-	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 10);
+	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 50);
 	image_transport::ImageTransport it_(nh_);
 	image_transport::Subscriber image_sub_;
 	
-	image_sub_ = it_.subscribe("/camera/image_color", 10, &imageCb);
+	image_sub_ = it_.subscribe("/camera/image_color", 1, &imageCb);
 
     // model = svm_load_model("data.txt.model");
     ros::Rate r(1);
-	// int fr = 0;
+	int fr = 0;
 	while(1)
 	{
 		r.sleep();
@@ -153,10 +161,10 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	// end = clock();
 	// cout<<"\nconstructor = "<<(end - begin)/1000.0;
 
-	// cout<<img.rows<<" img rowa"<<endl;
+	cout<<img.rows<<" img rowa"<<endl;
 	// L.Intensity_adjust();
 	// begin = clock();
-	// L.remove_grass();
+	L.remove_grass();
 	L.Mix_Channel();
 	// end = clock();
 	// cout<<"\nMix channel = "<<(end - begin)/1000.0;
@@ -240,7 +248,7 @@ void Lanes::Intensity_adjust()  // the top part of frame may have some intensity
 	// imshow("filter",filter);
 	// waitKey(0);
 	for(int i = 0; i < img.rows; i++)
-		for(int j = 0; j < img.cols; j++)
+		for(int j = 0; j < img.cols/4; j++)
 			for(int k = 0; k < 3; k++)
 			{
 				int temp = img.at<Vec3b>(i,j)[k] - filter.at<uchar>(i,j);
@@ -292,19 +300,39 @@ void Lanes::topview()
 {
 	
 	// Mat h = (Mat_<float>(3, 3)<< 3.665649454142774, 5.249642779023947, -2017.634107745852, 0.1725239771632309, 10.74704553239514, -3191.00361122947, 7.864729235797308e-05, 0.006494804637725546, 1);
-	Mat h = (Mat_<float>(3, 3)<<0.9524258265572764, 1.932259226972684, 71.36069918907818, 0.08413921815847476, 3.18697351467409, -77.56300977045593, -2.409361384497643e-05, 0.00403298641581695, 1);
+	Mat h = (Mat_<float>(3, 3)<< 1.120626008100252, 2.595139921257416, -85.49892417066768, 0.09238594964317154, 4.432836896915232, -183.7736041930297, 3.987326619447149e-05, 0.002799558905913381, 1);
+	float scale_factor = 3.4;
+	cout<<top_view.rows<<' '<<top_view.cols<<endl;
+	resize(top_view, top_view, Size(960*2, 1200));
+	resize(top_view_rgb, top_view_rgb, Size(960*2, 1200));
 
-	// float scale_factor = 3.4;
-	// cout<<top_view.rows<<' '<<top_view.cols<<endl;
-	// resize(top_view, top_view, Size(960*2, 1200));
-	// resize(top_view_rgb, top_view_rgb, Size(960*2, 1200));
+	warpPerspective(top_view, top_view, h, Size(480	*scale_factor,300*scale_factor));
+	warpPerspective(top_view_rgb, top_view_rgb, h, Size(480*scale_factor,300*scale_factor));
+	resize(top_view, top_view, Size(960, 600));
+	resize(top_view_rgb, top_view_rgb, Size(960, 600));
+	for(int i = 0; i < top_view_rgb.rows/3.5; i++)
+		for(int j = 0; j < top_view_rgb.cols; j++)
+		{
+			top_view.at<uchar>(i, j) = 0;
+			top_view_rgb.at<Vec3b>(i, j)[0] = 0;
+			top_view_rgb.at<Vec3b>(i, j)[1] = 0;
+			top_view_rgb.at<Vec3b>(i, j)[2] = 0;
 
-	warpPerspective(top_view, top_view, h, Size(960,600));
-	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960,600));
-	// resize(top_view, top_view, Size(960, 600));
-	// resize(top_view_rgb, top_view_rgb, Size(960, 600));
-
+		}
 	// imshow("top", top_view_rgb);
+	// waitKey(10);
+
+	Mat temp = top_view - top_view;
+	Mat temp2 = top_view_rgb - top_view_rgb;
+	for(int i = 0; i < top_view.rows; i++)
+		for(int j = 0, k = 100; j < top_view.cols && k < top_view.cols; j++, k++)
+		{
+			temp.at<uchar>(i, j) = top_view.at<uchar>(i, k);
+			temp2.at<Vec3b>(i, j) = top_view_rgb.at<Vec3b>(i, k);
+		}
+	top_view = temp;
+	top_view_rgb = temp2;
+	// imshow("top_shift", temp2);
 	// waitKey(10);
 
 }
@@ -473,24 +501,15 @@ void Lanes::Edge()
 
 void Lanes::parabola()
 {
-	// imshow("normal_top_view_grey", top_view);
+	 //imshow("normal_top_view_grey", top_view);
 	// imshow("top_view_rgb", top_view_rgb);
 	// waitKey(5);
 	Mat temp(top_view.rows, top_view.cols, CV_8UC3, Scalar(0,0,0));
-	for(int i = 0; i < top_view.rows; i++)
+	for(int i = 0; i < top_view.rows; i++)   // thresholding
 		for(int j = 0; j < top_view.cols; j++)
 			if(top_view.at<uchar>(i,j) > TH_DOT)
 				for(int k = 0; k < 3; k++)
 					temp.at<Vec3b>(i,j)[k] = 255;
-
-	Mat element = getStructuringElement(MORPH_RECT,
-                                       Size( 2*1 + 1, 2*1+1 ),
-                                       Point(1,1 ));
-    dilate(temp, temp, element);
-
-
-	// imshow("temp", temp);
-	// waitKey(5);
 	// IplImage im = temp;
 	// IplImage* image = &im;
 	// image = cvCreateImage(cvSize(top_view.cols, top_view.rows), 8, 3);
@@ -498,7 +517,7 @@ void Lanes::parabola()
 	/*IplImage *lab_image = cvCloneImage(image);
     cvCvtColor(image, lab_image, CV_BGR2Lab);*/
     int w = temp.rows, h = temp.cols;
-    int nr_superpixels = 600;
+    int nr_superpixels = 500;
     int nc = 100;
 
     // double step = sqrt((w * h) / (double) nr_superpixels);
@@ -514,12 +533,12 @@ void Lanes::parabola()
     // /* Display the contours and show the result. */
     // slic.display_contours(image, CV_RGB(255,0,0));
     // cvShowImage("slic", image);
-    // imshow("top", top_view);
+    // imshow("top", temp);
     // waitKey(2);
 
     /* gpu accelerated super pixel clustering */
 	// clock_t start, end;
- //    start = clock();
+ 	//   start = clock();
 	
 	resize(temp,temp,Size(temp.cols/2,temp.rows/2));
 
@@ -527,110 +546,136 @@ void Lanes::parabola()
 	// imshow("image original in top view", temp);
 	// cudaFree();
 	// waitKey(1);
+	Mat element = getStructuringElement(MORPH_RECT,
+                                       Size( 2*1 + 1, 2*1+1 ),
+                                       Point(1,1 ));
+    dilate(temp, temp, element);
+	//imshow("temp", temp);
+	//waitKey(5);
+	// SLIC
 	FastImgSeg segmenter;
 	segmenter.initializeFastSeg(temp.cols, temp.rows, nr_superpixels);
 	segmenter.LoadImg(temp.data);
 	segmenter.DoSegmentation(RGB_SLIC, nc);
 	segmenter.Tool_GetMarkedImg();
 	Mat marked(temp.rows, temp.cols, CV_8UC4, segmenter.markedImg);
-	Mat mask(temp.rows, temp.cols, CV_32SC1, segmenter.segMask);
-	// imshow("img super pixel cluster marked for threshold settings", marked);
-	// waitKey(5);
+	Mat mask(temp.rows, temp.cols, CV_32SC1, segmenter.segMask); // contains the cluster address of a pixel 
+	//imshow("img super pixel cluster marked for threshold settings", marked);
+	//waitKey(5);
 	// end = clock();
-	// cout<<"segmented\n";
+	cout<<"segmented\n";
 	// segmenter.~FastImgSeg();
 
 	Mat slic_img = temp.clone();//cvarrToMat(image);
     // imshow("image", img);
     // waitKey(10);
 
+
+
 	int max = 0;
 	for(int i = 0; i < mask.rows; i++)
 		for(int j = 0; j < mask.cols; j++)
 			if((int)mask.at<int>(i, j) > max) max = (int)mask.at<int>(i, j);
 	// cout<<max;
+	// max = no. of clusters(hope so :p)
+
 	int* count_pix = new int[max + 1];
 	int* count_col = new int[max + 1];
+
 	for(int i = 0; i <= max; i++)
-		count_pix[i] = count_col[i] = 0;
+		count_pix[i] = count_col[i] = 0;  //initialising with 0
+
+	vector<vector<Point> > cluster_points(max+1);
+
 	for(int i = 0; i < top_view.rows; i++)
 	{
 		for(int j = 0; j < top_view.cols; j++)
 		{
-			if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
-			int idx = mask.at<int>(i/2,j/2);
-			count_pix[idx]++;
-			if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
+			if(i/2 >= mask.rows || j/2 >= mask.cols) continue;  // mask is scaled down by factor of 2
+			int idx = mask.at<int>(i/2,j/2); 
+			count_pix[idx]++;  // storing the number of pixels in a particular cluster
+			if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;  // number of lane pixels in a  cluster
+			cluster_points[idx].push_back(Point(j,i));  // storing the points in the cluster in a vector
 		}
 	}
-	// cout<<"counted\n";
-	// waitKey(10);
+	// cout<<"counted\n"; 
+	// waitKey(10); 
 	// for(int i = 0; i <= max; i++)
 	// {
 	// 	cout<<count_col[i]/(count_pix[i]*1.0)<<' ';
 	// }
 	vector<Point> P;
-	// cout<<top_view.rows<<' '<<top_view.cols<<endl;
-	Mat dot(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));
-	Mat new_dot(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));  
+	cout<<top_view.rows<<' '<<top_view.cols<<endl;
+	Mat dot(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));  
 
-	for(int i = 0; i < top_view.rows; i++)
-	{
-		for(int j = 0; j < top_view.cols; j++)
-		{
-			// if(!i%10 && !j%10)
-			// cout<<i<<' '<<j<<endl;
-			// if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
+	// for(int i = 0; i < top_view.rows; i++)
+	// {
+	// 	for(int j = 0; j < top_view.cols; j++)
+	// 	{
+	// 		// if(!i%10 && !j%10)
+	// 		// cout<<i<<' '<<j<<endl;
+	// 		// if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
 			
-			int idx = mask.at<int>(i/2,j/2);
-			//cout<<"Idx : "<<idx<<endl;
-			if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
-			// cout<<(count_col[idx]/(count_pix[idx]*1.0))<<endl;
-			if(count_pix[idx] == 0) continue;
-			if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
+	// 		int idx = mask.at<int>(i/2,j/2);
+	// 		//cout<<"Idx : "<<idx<<endl;
+	// 		if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;  // if very small cluster
+	// 		// cout<<(count_col[idx]/(count_pix[idx]*1.0))<<endl;
 
-			// circle(dot, Point(j, i),3 ,Scalar(255),-1,1,0);
-			dot.at<uchar>(i, j) = 255;
-			int x = j;
-			int y = top_view.rows - i;
+	// 		if(count_pix[idx] == 0) continue; // why this kolaveri di???
+
+	// 		if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;  // proportion of white pixels in a cluster
+
+	// 		// circle(dot, Point(j, i),3 ,Scalar(255),-1,1,0);
+
+	// 		// // taking only a single point from a cluster
+	// 		// dot.at<uchar>(i, j) = 255;
+	// 		int x = j;
+	// 		int y = top_view.rows - i;
+	// 		P.push_back(Point(x, y));
+	// 		//count_pix[idx] = 0;
+	// 		// cout<<i<<' '<<j<<endl;
+	// 	}
+	// 	// cout<<i<<endl;
+	// }
+	int QUANTA = 1;//(int)sqrt(temp.rows*temp.cols/500);
+	for(int idx=0;idx<max;idx++)
+	{
+		cout<<"&&&&&&&&&&&&&&&&&&"<<endl;
+		if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;  // if very small cluster
+		cout<<"////////////////////"<<endl;
+		cout<<"count col = "<<count_col[idx]<<endl;
+		if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;  // proportion of white pixels in a cluster
+		cout<<"\\\\\\\\\\\\\\\\\\\\\\"<<endl;
+		int req_points = cluster_points[idx].size()/QUANTA;  // generating variable number of points from a cluster
+		cout<<"req = "<<req_points<<" index size = "<<cluster_points[idx].size()<<endl;
+		for(int i=0;i<req_points;i++)
+		{
+			int point_index = random()%cluster_points[idx].size();
+			int x = cluster_points[idx][point_index].x;
+			int y = top_view.rows - cluster_points[idx][point_index].y;
+			cout<<"$$$$$$$$$$$$$$$$$"<<endl;
+			dot.at<uchar>(cluster_points[idx][point_index].y,cluster_points[idx][point_index].x)=255;
 			P.push_back(Point(x, y));
-			count_pix[idx] = 0;
 		}
-		// cout<<i<<endl;
 	}
 	cout<<"P size = "<<P.size()<<endl;
 
 	// for(int i = 0; i < P.size(); i++)
 	// 	cout<<P[i].x<<' '<<P[i].y<<endl;
-	// imshow("dotted_condom", dot);
-	// waitKey(5);
+	imshow("ransac data points", dot);
+	waitKey(5);
 
-	int flag_no_lane = 0;
-
-	vector<double> way;
-
-	float a_gl = 1, lam_gl = 1, lam2_gl = 1, w_gl = 1;
-	// int flag_mario = 0;
 	if(P.size() < 6)
 	{
 		cout<<"\nNot enough points";
-        
-		//when no lane
-        w_gl = 10000;
-
-        first_frame = true;
-        vector<double> waypoint;
-        way.push_back(top_view_rgb.cols/2);
-        way.push_back(1*PPM);
-        way.push_back(PI/2);
-        flag_no_lane = 1;
+		return;
 	}
 	// imshow("undotted", slic_img);
 	
 	int p1_g, p2_g, p3_g, p4_g;
 	int score_gl = 0;/* comm_count_gl = 0;*/
-    int score_l_gl = 0, score_r_gl = 0; 
-	for(int i = 0; i < NUM_ITER && !flag_no_lane; i++)
+	float a_gl, lam_gl, lam2_gl, w_gl;
+	for(int i = 0; i < NUM_ITER; i++)
 	{
 		int p1 = random()%P.size(), p2 = random()%P.size(), p3 = random()%P.size(), p4 = random()%P.size();
 		if(p2 == p1) p2 = random()%P.size();
@@ -684,7 +729,6 @@ void Lanes::parabola()
 		// }
 
 		int score_loc = 0;/*, comm_count = 0;*/
-                int score_l_loc = 0, score_r_loc = 0;
 		float* param = parabola_params(ran_points);
 		float a = param[0], lam = param[1], lam2 = param[2], w = param[3];
 		if(isnan(w)) w = 15000;
@@ -702,7 +746,6 @@ void Lanes::parabola()
 		for(int p = 0; p < P.size(); p++)
 		{
 			int flag = 0;
-                        int flag_l = 0;
 			for(int x = 0; x < top_view.cols; x++)
 			{
 				int y_l = sqrt(lam*(x - a)), y_r = sqrt(lam2*(x - a - w));
@@ -713,7 +756,6 @@ void Lanes::parabola()
 				if(dist_l < 50)
 				{
 					flag = 1;
-                                        flag_l = 1;
 				}
 				float dist_r = sqrt(pow(x - P[p].x, 2) + pow(y_r - P[p].y, 2));
 				if(dist_r < 50)
@@ -726,24 +768,13 @@ void Lanes::parabola()
 					}
 				}
 			}
-			if(flag) {
-                                score_loc++;
-                                if (flag_l) {
-                                        score_l_loc++;
-                                }
-                                else {
-                                        score_r_loc++;
-                                }
-                        } 
-
+			if(flag) score_loc++;
 			// cout<<score_loc<<endl;
 		}
 		if(score_loc>score_gl)
 		{
 			if(w < 100 && w > -100) continue;
 			score_gl = score_loc;
-                        score_l_gl = score_l_loc;
-                        score_r_gl = score_r_loc;
 			a_gl = a;
 			lam_gl = lam;
 			lam2_gl = lam2;
@@ -756,71 +787,72 @@ void Lanes::parabola()
 			// comm_count_gl = comm_count;
 		}
 	}
-
-
-
-		//when no lane
-        if (score_gl < THRESHOLD_FOR_ANY_LANE)  {
-                w_gl = 10000;
-
-                first_frame = true;
-                vector<double> waypoint;
-                way.push_back(top_view_rgb.cols/2);
-                way.push_back(1*PPM);
-                way.push_back(PI/2);
-                flag_no_lane = 1; 
-        }
-
-        //when one lane only
-        // else if (score_l_gl < LANE_THRESHOLD || score_r_gl < LANE_THRESHOLD) {
-        //         w_gl = 10000;
-
-        //         first_frame = true;
-        //         vector<double> waypoint;
-        //         waypoint.push_back(top_view_rgb.cols/2);
-        //         waypoint.push_back(1*PPM);
-        //         waypoint.push_back(PI/2);
-        //         flag_no_lane = 1;
-        // }
-
 	cout<<"w = "<<w_gl<<" a = "<<a_gl<<" lam = "<<lam_gl<<"lam2 = "<<lam2_gl<<endl;
-	for(int x = 0; x < top_view.cols && !flag_no_lane; x++)
+	Mat new_dot(dot.rows, dot.cols, CV_8UC1, Scalar(0));
+	for(int x = 0; x < top_view.cols; x++)
 	{
 		int y_l = sqrt(lam_gl*(x - a_gl));
 		int y_r = sqrt(lam2_gl*(x - a_gl - w_gl));
 		
-		circle(dot, Point(x, top_view_rgb.rows - y_l),3,Scalar(255),-1,8,0); // dot is a single channel image
-		circle(dot, Point(x, top_view_rgb.rows - y_r),3,Scalar(255),-1,8,0);
-		circle(new_dot, Point(x, top_view_rgb.rows - y_l),3,Scalar(255),-1,14,0); // dot is a single channel image
-		circle(new_dot, Point(x, top_view_rgb.rows - y_r),3,Scalar(255),-1,14,0);
+		circle(new_dot, Point(x, top_view_rgb.rows - y_l),3,Scalar(255),-1,8,0); // dot is a single channel image
+		circle(new_dot, Point(x, top_view_rgb.rows - y_r),3,Scalar(255),-1,8,0);
+		// circle(dot, Point(x, top_view_rgb.rows - y_l),3,Scalar(255),-1,8,0); // dot is a single channel image
+		// circle(dot, Point(x, top_view_rgb.rows - y_r),3,Scalar(255),-1,8,0);
+
 	}
+	circle(top_view_rgb, Point(P[p1_g].x, top_view.rows - P[p1_g].y),10,Scalar(0,0,255),-1,8,0);
+	circle(top_view_rgb, Point(P[p2_g].x, top_view.rows - P[p2_g].y),10,Scalar(0,0,255),-1,8,0);
+	circle(top_view_rgb, Point(P[p3_g].x, top_view.rows - P[p3_g].y),10,Scalar(0,0,255),-1,8,0);
+	circle(top_view_rgb, Point(P[p4_g].x, top_view.rows - P[p4_g].y),10,Scalar(0,0,255),-1,8,0);
 
 	// imshow("top_view_rgb", top_view_rgb);
 	// imshow("sampled_points", dot);
 	// waitKey(2);
-    if (!flag_no_lane) {
-		circle(top_view_rgb, Point(P[p1_g].x, top_view.rows - P[p1_g].y),10,Scalar(0,0,255),-1,8,0);
-		circle(top_view_rgb, Point(P[p2_g].x, top_view.rows - P[p2_g].y),10,Scalar(0,0,255),-1,8,0);
-		circle(top_view_rgb, Point(P[p3_g].x, top_view.rows - P[p3_g].y),10,Scalar(0,0,255),-1,8,0);
-		circle(top_view_rgb, Point(P[p4_g].x, top_view.rows - P[p4_g].y),10,Scalar(0,0,255),-1,8,0);
-        way = gen_way(top_view_rgb, a_gl, lam_gl, lam2_gl, w_gl);
+	vector<double> way;
+    way = gen_way(top_view_rgb, a_gl, lam_gl, lam2_gl, w_gl);
+	// way.push_back(0.1);
+	// way.push_back(0.1);
+	// way.push_back(0.1);
+	
+	// {
+	// 	int i = 0;
+	// 	while(i < way_avg[0].size() - 1)
+	// 	{
+	// 		for(int j = 0; j < 3; j++)
+	// 		{
+	// 			way_avg[j][i] = way_avg[j][i + 1];
+	// 		}
+	// 		i++;
+	// 	}
 
-    }
+	// 	way_avg[0][way_avg[0].size() - 1] = way[0];
+	// 	way_avg[1][way_avg[0].size() - 1] = way[1];
+	// 	way_avg[2][way_avg[0].size() - 1] = way[2];
+	
+	// 	way[0] = way[1] = way[2] = 0;
+	// 	for(i = 0; i < way_avg[0].size(); i++)
+	// 	{
+	// 		way[0] += way_avg[0][i];
+	// 		way[1] += way_avg[1][i];
+	// 		way[2] += way_avg[2][i];
+	// 	}
+	// 	way[0] /= i;
+	// 	way[1] /= i;
+	// 	way[2] /= i;
 
-	// way.push_back(0.1);
-	// way.push_back(0.1);
-	// way.push_back(0.1);
+	// }
+
+
 	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
 	cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
-	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
-	arrowedLine(dot, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(255), 3);
 
-	// circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
+	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
+	circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
 	// circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
 
-	// imshow("top view rgb with dot showing waypoint", top_view_rgb);
-	// imshow("top view grey for laser scan", new_dot);
-	// waitKey(2);
+	//imshow("top view rgb with dot showing waypoint", top_view_rgb);
+	//waitKey(2);
+
 
     //set up transform
     tf::StampedTransform transform;
@@ -849,7 +881,7 @@ void Lanes::parabola()
 
 	// geometry_msgs::PoseStamped waypoint;
 	waypoint.pose.position.x = way[1]/PPM /*+ transform.getOrigin().x()*/;
-	waypoint.pose.position.y = -1*(way[0] - top_view.cols/2)/PPM/* + transform.getOrigin().y()*/;
+	waypoint.pose.position.y = -1*(way[0] - top_view.cols/2 - 100)/PPM/* + transform.getOrigin().y()*/;
 	waypoint.pose.position.z = 0 ;//+ transform.getOrigin().z();
 	float theta = (way[2] - PI/2) /*+ atan2(transform.getOrigin().y(),transform.getOrigin().x())*/;
 	cout<<"theta = "<<way[2]<<endl;
@@ -872,32 +904,27 @@ void Lanes::parabola()
 	// waypoint.pose.orientation.z = frame_qt.z();
 	// waypoint.pose.orientation.w = frame_qt.w();
 	
+	// imshow("Result showing dot image", new_dot);
+	// imshow("Res2", top_view_rgb);
+	// waitKey(5);
+
 	counter++;
-	if(counter > 1000)
-		counter = 0;
-
-	if (abs(w) > top_view_rgb.cols)
-		if (counter % 2 != 0) return;
-		else;
-
-	else if(counter % 8 != 0) return;
+	if(counter > 1000) counter = 0;
+	// if(counter % 2 != 0) return;
 
 
-
-	waypoint.header.frame_id = "base_link";
+	waypoint.header.frame_id = "axle";
 	ros::NodeHandle nh_;
 
 
 	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal/", 10);
-	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 10);
+	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 50);
 
-	lanes_pub.publish(imageConvert(new_dot));
+	// lanes_pub.publish(imageConvert(new_dot));
 
 	waypoint_pub.publish(waypoint);
 	cout<<"Published\n";
-	// imshow("Result showing dot image", dot);
-	// imshow("Res2", top_view_rgb);
-	// waitKey(10);
+	// exit();
 }
 
 float* Lanes::parabola_params(Point *points)   //mode: 1-6 => llr,lrl,rll,lrr,rlr,rrl
@@ -933,6 +960,206 @@ float* Lanes::parabola_params(Point *points)   //mode: 1-6 => llr,lrl,rll,lrr,rl
 }
 
 
+// vector<double> generateWaypoint(Mat img,double a,double lm_1,double lm_2,double w)
+// {
+
+// 	// ros::NodeHandle nh_;
+
+// 	// ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("lane_waypoint", 1000);
+
+// 	//returns (x,y,theta)
+// 	vector<double> waypoint;
+// 	double x,y = img.rows/3,theta;  // put y --> height/3
+// 	//case : two parabloas visible
+// 	double x11,x12;
+// 	x11 = (y*y/lm_1) + a;/ 	x12 = (y*y/lm_2) + a + w;
+	
+// 	if(x11 < 0)
+// 		x11 = 0;
+// 	if(x12 > img.cols-1)
+// 		x12 = img.cols-1;
+
+// 	x = (x11+x12)/2.0;
+//         cout<<"!!!!! "<<lm_1<<" "<<lm_2<<endl;
+// 	theta = fabs(atan((lm_1+lm_2)/(4.0*y)));
+// 	cout<<"Theta = "<<theta<<endl;
+// 	circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+// 	int x_d=(int)(x-100*cos(theta));
+// 	int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+// 	circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+// 	//line(img,Point(x,img.rows - 360.0),Point(,, Scalar(255,0,0), 2, CV_AA);
+// 	waypoint.push_back(x);
+// 	waypoint.push_back(y);
+// 	waypoint.push_back(theta);
+// 	return waypoint;
+// }
+
+// vector<double> Lanes::generateWayPoint_2(Mat img,double a,double lm_1,double lm_2, double w)
+// {
+// 	vector<double> waypoint_2;
+
+// 	double x,y = (img.rows*1.5)/3;  // put y --> height/3
+//         double x11,x12;
+//         curr_xl_2 = y*y/lm_1 + a;
+//         curr_xr_2 = y*y/lm_2 + a + w;
+//         //one lane
+//         if (w > 600 || w < -600) 
+
+//         {
+// 		if (a<(img.cols/2)) {
+// 			x=(y*y/lm_1)+a+(width_lanes/2);
+// 			//theta = fabs(atan(lm_1/(2*sqrt(lm_1*(x-a)))));
+// 		} 
+// 		else {
+//                 x=(y*y/lm_1)+a-(width_lanes/2);			//theta = fabs(atan(lm_2/(2*sqrt(lm_2*(x-a-w)))));
+// 		}
+//                 y = waypoint_prev_2[1];
+//                 //theta = waypoint_prev_2[2];
+//                 //circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+//                 //int x_d=(int)(x-100*cos(theta));
+//                 //int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+//                 //circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+//         }
+
+//         //two lanes
+//         else {
+//                 x11 = (y*y/lm_1) + a;
+//                 x12 = (y*y/lm_2) + a + w;
+                
+//                 if(x11 < 0)
+//                         x11 = 0;
+//                 if(x12 > img.cols-1)
+//                         x12 = img.cols-1;
+
+//                 x = (x11+x12)/2.0;
+//                 prev_xl_2 = x11;
+//                 prev_xr_2 = x12;
+//                 //cout<<"!!!!! "<<lm_1<<" "<<lm_2<<endl;
+//                 //theta = fabs(atan((lm_1+lm_2)/(4.0*y)));
+//                 //cout<<"Theta = "<<theta<<endl;
+//                 //circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+//                 //int x_d=(int)(x-100*cos(theta));
+//                 //int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+//                 //circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+//         }
+
+
+//         /*
+//         //no lane
+//         else {
+//                 x = waypoint_prev[0];
+//                 circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+//                 int x_d=(int)(x-100*cos(theta));
+//                 int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+//                 circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+//                 return waypoint_prev;
+
+//         }
+// */
+// 	//line(img,Point(x,img.rows - 360.0),Point(,, Scalar(255,0,0), 2, CV_AA);
+// 	waypoint_2.push_back(x);
+// 	waypoint_2.push_back(y);
+// 	//waypoint_2.push_back(theta);
+//     waypoint_prev_2 = waypoint_2;
+// 	return waypoint_2;
+// }
+
+// vector<double> Lanes::generateWaypoint(Mat img,double a,double lm_1,double lm_2,double w) {
+
+
+// 	//waitKey(2000);
+ 
+//         //y2 = lam(x-a) 
+
+// 	//returns (x,y,theta)
+// 	vector<double> waypoint;
+
+// 	double x,y = img.rows/3,theta;  // put y --> height/3
+//         double x11,x12;
+//         curr_xl = y*y/lm_1 + a;
+//         curr_xr = y*y/lm_2 + a + w;
+//         Point p1;
+//         p1.y=320;
+//         //one lane
+//         if (w > 600 || w < -600 || isnan(w)) 
+//         {
+
+//         cout<<"check in this:curr_xl= "<<curr_xr<<" curr_xr = "<<curr_xr<<endl;	
+//         cout<<"y "<<y<<" lm1 "<<lm_1<< " lm2 "<<lm_2<<" a "<<a<<endl;
+//         if(a<(img.cols/2)){
+//         	cout<<"CHeck"<<" A "<<a<<" width_lanes"<<width_lanes<<endl;
+// 		//if (fabs(curr_xl - prev_xl) < fabs(curr_xr - prev_xr)) {
+// 			//x = waypoint_prev[0] + curr_xl - prev_xl;
+// 			x=(y*y/lm_1)+a+(width_lanes/2);
+// 			p1.x=2;
+// 			//theta = fabs(atan(lm_1/(2*sqrt(lm_1*(x-a)))));
+// 		} 
+// 		else {
+// 			cout<<"CHeck1"<<" A "<<a<<" width_lanes"<<width_lanes<<endl;
+// 			//x = waypoint_prev[0] + curr_xr - prev_xr;
+// 			x=(y*y/lm_1)+a-(width_lanes/2);
+// 			p1.x=x;
+// 			//theta = fabs(atan(lm_2/(2*sqrt(lm_2*(x-a-w)))));
+// 		}
+//                 //y = waypoint_prev[1];
+//                 //theta = waypoint_prev[2];
+//                 circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+//                 //int x_d=(int)(x-100*cos(theta));
+//                 //int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+//                 // circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+//         }
+
+//         //two lanes
+//         else {
+//                 x11 = (y*y/lm_1) + a;
+//                 x12 = (y*y/lm_2) + a + w;
+                
+//                 if(x11 < 0)
+//                         x11 = 0;
+//                 if(x12 > img.cols-1)
+//                         x12 = img.cols-1;
+
+//                 x = (x11+x12)/2.0;
+//                 prev_xl = x11;
+//                 prev_xr = x12;
+//                 cout<<"!!!!! "<<lm_1<<" "<<lm_2<<endl;
+//                 theta = fabs(atan((lm_1+lm_2)/(4.0*y)));
+//                 cout<<"Theta = "<<theta<<endl;
+//                 circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+//                 p1.x=x;
+//                 //int x_d=(int)(x-100*cos(theta));
+//                 //int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+//                 // circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+//         }
+
+
+//         /*
+//         //no lane
+//         else {
+//                 x = waypoint_prev[0];
+//                 circle(img, Point(x,320),10,Scalar(0,255,0),-1,8,0);
+//                 int x_d=(int)(x-100*cos(theta));
+//                 int y_d=(int)(img.rows-1-(y+100*sin(theta)));
+//                 circle(img, Point(x_d,y_d),10,Scalar(255,0,0),-1,8,0);
+//                 return waypoint_prev;
+
+//         }
+// */
+// 	//line(img,Point(x,img.rows - 360.0),Point(,, Scalar(0,0,255), 2, CV_AA);
+// 	waypoint.push_back(x);
+// 	waypoint.push_back(y);
+// 	vector<double> waypoint_2=generateWayPoint_2(img,a,lm_1,lm_2,w);
+//     circle(img, Point(waypoint_2[0],240),10,Scalar(255,0,0),-1,8,0);
+//     line(img, Point(waypoint_2[0],240),p1,Scalar(0,0,255),2,CV_AA);
+
+//    cout<<"!!!!@@@@"<<x<<" "<<y<<" "<<waypoint_2[0]<<" "<<waypoint_2[1]<<endl;
+// 	waypoint.push_back(atan((y-waypoint_2[1])/(x-waypoint_2[0])));
+// 	//waypoint.push_back(theta);
+//     waypoint_prev = waypoint;
+// 	return waypoint;
+// }
+
+
 
 bool IsAllowed(float lam1,float a,float lam2,float w,int rows,int cols)
 {
@@ -964,25 +1191,25 @@ bool IsAllowed(float lam1,float a,float lam2,float w,int rows,int cols)
 
 sensor_msgs::LaserScan imageConvert(cv::Mat image) 
 {
-  // int  = 336;
-  int c = 0.70;
+  int k = 200;
+  int c = 0.8*200;
   sensor_msgs::LaserScan scan;
-  scan.angle_min = -2.36;
-  scan.angle_max = 2.36;
-  scan.angle_increment = 0.004;
+  scan.angle_min = -1.57;
+  scan.angle_max = 1.57;
+  scan.angle_increment = 0.02;
   scan.header.stamp = ros::Time::now();
   scan.header.frame_id = "laser";
   scan.range_min=0;
-  scan.range_max=30;
-  scan.time_increment=(float)(0.025/1081);
-  scan.scan_time=0.025;
-  scan.ranges.resize(1081);
+  scan.range_max=10;
+  scan.time_increment=0.045;
+  scan.scan_time=0.045;
+  scan.ranges.resize(158);
   // cv::imshow("test",image);
   // cv::waitKey(20);
-  for(float t=0;t<=1080;t++)
-    {
-      scan.ranges[t] = numeric_limits<float>::infinity();  //maximum range value
-    }
+  // for(int t=0;t<=157;t++)
+  //   {
+  //     scan.ranges[t]=FLT_MAX;//infinte
+  //   }
   for(int i=0;i<image.rows;i++)
     for(int j=0;j<image.cols;j++)
     {
@@ -993,8 +1220,8 @@ sensor_msgs::LaserScan imageConvert(cv::Mat image)
       if(image.at<uchar>(i,j)>128)
       {
 
-        x=(j-image.cols/2)/(1.0*PPM);
-        y=((image.rows-i)+ 1.1*PPM)/PPM;
+        x=(j-image.cols/2)/k;
+        y=((image.rows-i)+c)/k;
         
         if(y!=0)
           angle = (-1.0)*atan((1.0)*x/y);
@@ -1006,8 +1233,8 @@ sensor_msgs::LaserScan imageConvert(cv::Mat image)
 
         dist=sqrt(x*x+y*y);
         int index=(int)((angle-scan.angle_min)/scan.angle_increment);
-         if(scan.ranges[index]>dist)
-          scan.ranges[index]=dist;
+        // if(scan.ranges[index]>dist)
+        scan.ranges[index]=dist;
       }
     }
 
@@ -1053,24 +1280,18 @@ Point centroid(Mat img, double a, double lam)
 	centroid.y=img.rows/2;
 	return centroid;		
 }
-
-bool is_bottom_at_left (Mat img, float a) {
-        if (a < img.cols/2) return true;
-        else return false;
-}
-
 vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 {
-	float range = 2;
-	float offset = 0;
+	float range = 1.2;
+	float offset = 1.10;
 	if(a >= img.cols/2 && (a + w) >= img.cols/2)
-		w = 10001;
+		w = 10000;
 	if(a < img.cols/2 && (a + w) < img.cols/2)
-		w = 10002;
+		w = 10000;
 	vector<double> way;
 	bool is_lane_left;
 
-        //single lane
+//single lane
 	if(abs(w)>img.cols)
 	{
 		Point center_single = centroid(img,a,lam1);
@@ -1078,7 +1299,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 		if(first_frame)
 		{
 			first_frame=false;
-			if(is_bottom_at_left(img, a))
+			if(center_single.x<img.cols/2)
 				is_lane_left=true;
 			else
 				is_lane_left=false;
@@ -1107,39 +1328,31 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 		//calculate waypoint if left lane
 		if(!is_lane_left)
 		{
-			cout << "only right lane visible\n";
-		
 			float y = range*PPM;
 			float x = pow((range - offset)*PPM, 2)/lam1 + a - wide/2;
-			// way.push_back(x);			
-			// way.push_back(y); 
-			way.push_back(img.cols/2);			
-			way.push_back(100); 
-
+			way.push_back(x);			
+			way.push_back(y); 
 			float grad = heading(img, a, lam1); //	lam1/((range - offset)*2*PPM);
 			//grad = atan(grad);
 			// grad = grad < 0 ? PI + grad : grad;
 			// grad = grad < 0 ? grad + 3.14/12 : grad - 3.14/12;
 			way.push_back(grad);
+			cout << "only right lane visible\n";
 			return way;
 		}
 		//calculate waypoint if right lane
 		else
 		{
-				cout<<"only left lane visible\n";
-		
 			float y = range*PPM;
 				float x = pow((range - offset)*PPM, 2)/lam1 + a + wide/2;
-				// way.push_back(x);
-				// way.push_back(y);
-				way.push_back(img.cols/2);			
-				way.push_back(100); 
-
-				float grad = heading(img, a, lam1);//	lam1/((range - offset)*2*PPM);
+				way.push_back(x);
+				way.push_back(y);
+				float grad = heading(img, a, lam2);//	lam1/((range - offset)*2*PPM);
 				// grad = atan(grad);
 				// grad = grad < 0 ? PI + grad : grad;
 				// grad = grad < 0 ? grad + 3.14/12 : grad - 3.14/12;
 				way.push_back(grad);
+				cout<<"only left lane visible\n";
 				return way;
 
 		}
@@ -1149,9 +1362,6 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	//two lanes
 	else
 	{
-        cout<<"both lane visible\n";
-		
-                first_frame=false;
 		float temp = pow((range - offset)*PPM, 2)/lam1 + a;
 		float temp2 = pow((range - offset)*PPM, 2)/lam2 + a + w;
 		way.push_back(temp/2 + temp2/2);
@@ -1166,6 +1376,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 		// grad2 = grad2 < 0 ? grad2 + 3.14/12 : grad2 - 3.14/12;
 		is_prev_single=false;
 		way.push_back((grad1 + grad2)/2);
+		cout<<"both lane visible\n";
 		int lane1_centroid_x=centroid(img,a,lam1).x, lane2_centroid_x=centroid(img,a+w,lam2).x;
 		if(lane1_centroid_x<lane2_centroid_x)
 		{
