@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1)
 project(lane_detector)
+
+set (CMAKE_CXX_STANDARD 11)
+
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
@@ -8,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   rospy
   tf
+  message_filters
 )
 
 find_package(OpenCV REQUIRED)
@@ -63,9 +67,8 @@ cuda_add_library(gSLICr_lib
 
 target_link_libraries(gSLICr_lib ${CUDA_LIBRARY})
 
-#add_executable(lanes src/lanes.cpp)
-#add_executable(laserScan2mat src/laserScan2mat.cpp)
-add_executable(lanes src/lanes.cpp)
+add_executable(lanes src/lanes_chalne_wala.cpp)
+add_executable(lanes_sid src/lanes_chalne_wala_siddhant.cpp)
 
 add_library(svm include/lane_detector/svm.cpp)
 
@@ -76,4 +79,9 @@ target_link_libraries(lanes
   gSLICr_lib
 )
 
-#target_link_libraries(laserScan2mat ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(lanes_sid
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  svm
+  gSLICr_lib
+)
