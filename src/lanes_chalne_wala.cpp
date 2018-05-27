@@ -51,17 +51,34 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 
 	// L.Intensity_adjust();
 	// begin = clock();
-	// L.remove_obstacles();
-	L.preprocess_old();
+	
+	
+	
+	 L.remove_obstacles();
+
+	 /* uncomment this  */
+	//L.preprocess_old();
+	
+	
 	// L.remove_grass();
+
+
 	// L.Mix_Channel();
 	// end = clock();
 	// cout<<"\nMix channel = "<<(end - begin)/1000.0;
 
 	// L.remove_grass();
-	L.topview();
+
+
+
+	/*  uncomment this  */
+	//L.topview();
+
+
 	// begin = clock();
-	L.parabola();
+
+	/*  uncomment this  */
+	//L.parabola();
 }
 
 
@@ -1235,6 +1252,7 @@ void Lanes::remove_obstacles() {
         bright_obs = channels[2] - channels[1];
         dark_obs = channels[0] - channels[1];
 
+
         medianBlur(bright_obs, bright_obs, 9);
 
         //imshow("bright_obs", bright_obs);
@@ -1284,8 +1302,8 @@ void Lanes::remove_obstacles() {
                 box_dark[i] =  boundingRect(contours_dark[i]);
 
                 if (box_dark[i].area() > 8000) {
-                        circle(img, Point(box_bright[i].tl().x, box_bright[i].br().y), 8,Scalar(255, 120, 255),-1,8,0);
-                        circle(img, Point(box_bright[i].br().x, box_bright[i].br().y), 8,Scalar(120, 255, 255),-1,8,0);
+                        circle(img, Point(box_dark[i].tl().x, box_dark[i].br().y), 8,Scalar(255, 120, 255),-1,8,0);
+                        circle(img, Point(box_dark[i].br().x, box_dark[i].br().y), 8,Scalar(120, 255, 255),-1,8,0);
                         //rectangle(img, box_dark[i].tl(), box_dark[i].br(), Scalar(255, 1, 2), 1, 8, 0);
                         drawContours(img, contours_dark, i, Scalar(0, 3, 255), -1, 8, hierarchy_dark);
                 }
@@ -1305,8 +1323,9 @@ void Lanes::remove_obstacles() {
         }
         */
 
-        //imshow("removed obstacle",img);
-        //waitKey(10);
+	imshow("bright_obs", bright_obs);
+        imshow("img",img);
+        waitKey(10);
 }
 
 
