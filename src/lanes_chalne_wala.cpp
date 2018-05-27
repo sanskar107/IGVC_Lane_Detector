@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 	image_transport::ImageTransport it_(nh_);
 	image_transport::Subscriber image_sub_;
 	
-	image_sub_ = it_.subscribe("/camera/image_color", 10, &imageCb);
+	image_sub_ = it_.subscribe("/camera/image_color", 1, &imageCb);
 
 
     // model = svm_load_model("data.txt.model");
@@ -51,39 +51,23 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 
 	// L.Intensity_adjust();
 	// begin = clock();
-	
-	
-	
-	 L.remove_obstacles();
-
-	 /* uncomment this  */
-	//L.preprocess_old();
-	
-	
+	L.remove_obstacles();
+	L.preprocess_old();
 	// L.remove_grass();
-
-
 	// L.Mix_Channel();
 	// end = clock();
 	// cout<<"\nMix channel = "<<(end - begin)/1000.0;
 
 	// L.remove_grass();
-
-
-
-	/*  uncomment this  */
-	//L.topview();
-
-
+	L.topview();
 	// begin = clock();
-
-	/*  uncomment this  */
-	//L.parabola();
+	L.parabola();
 }
 
 
 Lanes::Lanes(Mat img)
 {
+	imshow("img", img);
 	resize(img, img, Size(960, 600));
 	// imshow("img", img);
 	// cout<<img.rows<<' '<<img.cols<<endl;
@@ -198,7 +182,7 @@ void Lanes::preprocess_lab()
 	medianBlur (lab,lab, 7 );
 	int tem = 5;
 	while(tem--)
-		erode(lab,lab, element );
+		erode(lab,lab, element);
 	tem = 5;
 	while(tem--)
 		dilate(lab,lab,element);
@@ -215,11 +199,18 @@ void Lanes::preprocess_old()
 {
 	remove_grass();
 	Mix_Channel();
+	int dilation_size = 1;
+	Mat element = getStructuringElement(MORPH_CROSS,
+	                               Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+	                               Point( dilation_size, dilation_size ) );
+
+	erode(img_gray, img_gray, element);
+	erode(img, img, element);	
 	top_view = img_gray.clone();
 	top_view_rgb = img.clone();
-	imshow("orig", top_view_rgb);
-	imshow("result", top_view);
-	waitKey(3);
+	// imshow("orig", top_view_rgb);
+	// imshow("result", top_view);
+	// waitKey(3);
 
 }
 
@@ -237,8 +228,8 @@ void Lanes::Intensity_distribution()
 		sum /= img.cols;
 		dist.at<uchar>(256-sum,i) = 255;
 	}
-	// imshow("Intensity_distribution",dist);
-	//waitKey(0);
+	imshow("Intensity_distribution",dist);
+	waitKey(0);
 }
 
 void Lanes::Intensity_adjust()  // the top part of frame may have some intensity variation
@@ -294,8 +285,8 @@ void Lanes::remove_grass()
 			}
 		}
 	img = non_grass;
-	imshow("remove_grass", non_grass);
-	waitKey(3);
+	// imshow("remove_grass", non_grass);
+	// waitKey(3);
 }
 
 
@@ -307,8 +298,8 @@ void Lanes::topview()
 	warpPerspective(top_view, top_view, h, Size(960,600));
 	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960,600));
 
-	imshow("preprocess", top_view);
-	waitKey(10);
+	// imshow("preprocess", top_view);
+	// waitKey(10);
 
 }
 
@@ -577,9 +568,8 @@ void Lanes::parabola()
                                        Point(1,1 ));
     dilate(temp, temp, element);
 
-
-	// imshow("temp", temp);
-	// waitKey(5);
+	imshow("temp", temp);
+	waitKey(5);
     int w = temp.rows, h = temp.cols;
     int nr_superpixels = 600;
     int nc = 100;
@@ -611,7 +601,7 @@ void Lanes::parabola()
 	// cout<<"segmented\n";
 	// segmenter.~FastImgSeg();
 
-	Mat slic_img = temp.clone();//cvarrToMat(image);
+	// Mat slic_img = temp.clone();//cvarrToMat(image);
     // imshow("image", img);
     // waitKey(10);
 
@@ -647,16 +637,16 @@ void Lanes::parabola()
     /*	calculating the number of pixels of pixels in each superpixel and the number ofpixels that pass the colour threshold	*/
     for(int i = 0; i < top_view.rows; i++)
     {
-	for(int j = 0; j < top_view.cols; j++)
-	{
-	    if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
-	    int idx = mask.at<int>(i/2,j/2);
-	    count_pix[idx]++;
-	    count_x[idx] += j;
-	    count_y[idx] += i;
-	    if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
+		for(int j = 0; j < top_view.cols; j++)
+		{
+		    if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
+		    int idx = mask.at<int>(i/2,j/2);
+		    count_pix[idx]++;
+		    count_x[idx] += j;
+		    count_y[idx] += i;
+		    if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
 
-	    //cout << "count_pix" << count_pix[idx] << endl;
+		    //cout << "count_pix" << count_pix[idx] << endl;
 		}
     }
 
@@ -681,28 +671,27 @@ void Lanes::parabola()
 		}
     }
 
-
     /*	K is the kernel size and 
      	dist_for_inlier is min(|dist in x from lane|, |dist in y|) for which a point is to be considered an inlier	*/
-
+    // cout<<Q.size();
 
     for (int i = 0; i < no_of_random_points_for_dot; i++) {
-	// cout << "Q " << Q[i] << endl;
-	int temp =  abs(random()%Q.size());
-	P.push_back(Q[temp]);
-	// cout << "P " << P.back() << endl;
-	dot.at<uchar>(mario.rows-Q[temp].y, Q[temp].x) = 255;
+		// cout << "Q " << Q[i] << endl;
+		if(Q.size() == 0) continue;
+		int temp =  abs(random()%Q.size());
+		// cout<<i<<' '<<endl;
+		P.push_back(Q[temp]);
+		// cout << "P " << P.back() << endl;
+		dot.at<uchar>(mario.rows-Q[temp].y, Q[temp].x) = 255;
     }
 
-        imshow("mario", mario);
 
+    imshow("mario", mario);
 	cout<<"P size = "<<P.size()<<endl;
-
 	// for(int i = 0; i < P.size(); i++)
 	// 	cout<<P[i].x<<' '<<P[i].y<<endl;
 	imshow("dotted_condom", dot);
 	waitKey(5);
-
 	int flag_no_lane = 0;
 
 	vector<double> way;
@@ -1252,7 +1241,6 @@ void Lanes::remove_obstacles() {
         bright_obs = channels[2] - channels[1];
         dark_obs = channels[0] - channels[1];
 
-
         medianBlur(bright_obs, bright_obs, 9);
 
         //imshow("bright_obs", bright_obs);
@@ -1323,9 +1311,8 @@ void Lanes::remove_obstacles() {
         }
         */
 
-	imshow("bright_obs", bright_obs);
-        imshow("img",img);
-        waitKey(10);
+        //imshow("removed obstacle",img);
+        //waitKey(10);
 }
 
 
