@@ -166,7 +166,9 @@ public:
 	float* parabola_params(Point*);
 	void parabola();
 	void superpixels();
-	void preprocess();	
+	void preprocess_lab();
+	void preprocess_indu();
+	void preprocess_old();
 	vector<double> generateWaypoint(Mat img,double a,double lm_1,double lm_2,double w);
 	vector<double> generateWayPoint_2(Mat img,double a,double lm_1,double lm_2, double w);
 	vector<double> quadraticFit(vector<Point> *data1);

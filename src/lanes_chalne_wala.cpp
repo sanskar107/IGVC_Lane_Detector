@@ -1,102 +1,5 @@
 #include "../include/lane_detector/lanes_chalne_wala.hpp"
 
-// typedef std::chrono::high_resolution_clock::time_point TimeVar;	
-// int main(int argc, char** argv)
-// {
-// 	cout<<"running"<<endl;
-// 	ros::init(argc, argv, "image_converter");
-// 	ros::NodeHandle nh_;
-
-// 	// 	if(argc < 2) return 0;
-//     VideoCapture cap(argv[1]); // open the default camera
-//     if(!cap.isOpened())  // check if we succeeded
-//         return -1;
-//     // model = svm_load_model("data.txt.model");
-// 	int fr = 0;
-// 	while(1)
-// 	{
-// 		// if(fr == 1000) fr = 0;
-// 		//Mat given=imread(argv[1],1);
-// 		Mat frame;
-// 		cap>>frame;
-// 		if(!frame.data) cout<<"null";
-// 		Lanes L(frame);     // L --> frame
-// 		//L.Intensity_distribution();
-// 		fr++;
-// 		// if(fr%20 != 0) continue;
-	
-
-// 		// L.Intensity_adjust();
-// 		// L.remove_grass();
-
-// 		L.Mix_Channel();
-// 		L.topview();
-// 		// L.display();
-// 		// L.superpixels();
-// 		L.parabola();
-// 		// L.topview(1);
-// 			// L.Hough();
-// 			// L.display();
-/// 		// L.Brightest_Pixel_col();
-// 		// L.Brightest_Pixel_row();
-// 		// L.control_points();
-// 		// L.curve_fitting();
-// 			// L.control_vanishing();
-// 		waitKey(10);
-// 	}
-// 	// waitKey(0);
-// 	return 0;
-
-// }
-
-// void imageCb(const sensor_msgs::ImageConstPtr& msg)
-// {
-//     Mat img;
-// 	cv_bridge::CvImagePtr cv_ptr;
-// 	clock_t begin, end;
-// 	begin = clock();
-//     try
-//     {
-// 		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-// 		img = cv_ptr->image;
-// 	}
-// 	catch (cv_bridge::Exception& e)
-// 	{
-// 		ROS_ERROR("cv_bridge exception: %s", e.what());
-// 		return;
-// 	}
-// 	if(img.rows < 0) return;
-// 	counter++;
-// 	if(counter > 1000) counter = 0;
-// 	// if(counter % 20 != 0) return;
-// 	end = clock();;
-// 	// cout<<"\nCV_BRIDGE = "<<(end - begin)/1000.0;
-	
-// 	begin = clock();
-// 	Lanes L(img);
-// 	end = clock();
-// 	// cout<<"\nconstructor = "<<(end - begin)/1000.0;
-
-// 	// cout<<img.rows<<" img rowa"<<endl;
-// 	// L.Intensity_adjust();
-// 	begin = clock();
-// 	L.Mix_Channel();
-// 	end = clock();
-// 	// cout<<"\nMix channel = "<<(end - begin)/1000.0;
-
-// 	L.remove_grass();
-// 	L.topview();
-	
-// 	begin = clock();
-// 	L.parabola();
-// 	end = clock();
-// 	// cout<<"\nParabola = "<<(end - begin)/1000.0;
-
-// }
-
-
-// VideoWriter video("outcpp.avi",CV_FOURCC('M','J','P','G'),10, Size(1920, 1200));
-
 int main(int argc, char** argv)
 {
 
@@ -118,7 +21,7 @@ int main(int argc, char** argv)
 	// int fr = 0;
 	while(1)
 	{
-		r.sleep();
+		// r.sleep();
 		ros::spinOnce();
 	}
 
@@ -143,24 +46,13 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 		return;
 	}
 	if(img.rows < 0) return;
-	// video.write(img);
-	// end = clock();;
-	// cout<<"\nCV_BRIDGE = "<<(end - begin)/1000.0;
 
-
-
-	
-	// begin = clock();
 	Lanes L(img);
 
-	// end = clock();
-	// cout<<"\nconstructor = "<<(end - begin)/1000.0;
-
-	// cout<<img.rows<<" img rowa"<<endl;
 	// L.Intensity_adjust();
 	// begin = clock();
-	L.remove_obstacles();
-	L.preprocess();
+	// L.remove_obstacles();
+	L.preprocess_old();
 	// L.remove_grass();
 	// L.Mix_Channel();
 	// end = clock();
@@ -168,11 +60,8 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 
 	// L.remove_grass();
 	L.topview();
-	
 	// begin = clock();
 	L.parabola();
-	// end = clock();
-	// cout<<"\nParabola = "<<(end - begin)/1000.0;
 }
 
 
@@ -182,7 +71,7 @@ Lanes::Lanes(Mat img)
 	// imshow("img", img);
 	// cout<<img.rows<<' '<<img.cols<<endl;
 	this->img = img;
-	top_view_rgb=img.clone();
+	// top_view_rgb=img.clone();
 	cvtColor(this->img, this->img_gray,CV_BGR2GRAY);
 	this->flag_width = 0;
 	this->width_lanes = 400;
@@ -206,7 +95,7 @@ void Lanes::Mix_Channel()
 			if(temp > 255) temp=255;
 			img_gray.at<uchar>(i,j) = (unsigned int)temp;
 		}
-	top_view=img_gray.clone();
+	// top_view=img_gray.clone();
 	// imshow("Mix_Chann",img_gray);
 	// waitKey(0);
 }
@@ -219,54 +108,60 @@ void Lanes::display()
 }
 
 
-void Lanes::preprocess()
+void Lanes::preprocess_indu()
 {
-	// Mat pre = img.clone();
- //    for(int i=0; i < pre.rows; i++)
-	// {
-	// 	for(int j=0; j < pre.cols; j++)
-	// 	{
-	// 		if(pre.at<Vec3b>(i, j)[0] > 160 && pre.at<Vec3b>(i, j)[1] > 160 && pre.at<Vec3b>(i, j)[2] > 160)
-	// 			continue;
-	// 		else
-	// 		{
-	// 			pre.at<Vec3b>(i, j)[0] = 0;
-	// 			pre.at<Vec3b>(i, j)[1] = 0;
-	// 			pre.at<Vec3b>(i, j)[2] = 0;
+	Mat pre = img.clone();
+    for(int i=0; i < pre.rows; i++)
+	{
+		for(int j=0; j < pre.cols; j++)
+		{
+			if(pre.at<Vec3b>(i, j)[0] > 160 && pre.at<Vec3b>(i, j)[1] > 160 && pre.at<Vec3b>(i, j)[2] > 160)
+				continue;
+			else
+			{
+				pre.at<Vec3b>(i, j)[0] = 0;
+				pre.at<Vec3b>(i, j)[1] = 0;
+				pre.at<Vec3b>(i, j)[2] = 0;
 
-	// 		}
-	// 	}
-	// }
+			}
+		}
+	}
 
+	imshow("mid", pre);
 	// medianBlur(pre, pre, 7);
  //    erode(pre, pre, Mat(), Point(-1,-1),3);
  //    medianBlur(pre, pre, 7);
  //    medianBlur(pre, pre, 7);
 
-	// Mat channel[3];
- //    split(pre, channel);
+	Mat channel[3];
+    split(pre, channel);
 
-	// Mat B2_G = (2*channel[0]-channel[1]);
-	// threshold(B2_G, B2_G, 90, 255, THRESH_BINARY);
- //    Mat B_G = (channel[0]-channel[1]);
- //    threshold(B_G, B_G, 60, 255, THRESH_BINARY);
+	Mat B2_G = (2*channel[0]-channel[1]);
+	threshold(B2_G, B2_G, 90, 255, THRESH_BINARY);
+    Mat B_G = (channel[0]-channel[1]);
+    threshold(B_G, B_G, 60, 255, THRESH_BINARY);
 
- //    Mat result = B2_G-B_G;
+    Mat result = B2_G-B_G;
 
 
-	// medianBlur(result, result, 7);
- //    erode(result, result, Mat(), Point(-1,-1),3);
- //    medianBlur(result, result, 7);
- //    medianBlur(result, result, 7);
- //    img_gray = result;
- //    // imshow("preproces", result);
- //    // waitKey(3);
-	// top_view=img_gray.clone();
+	medianBlur(result, result, 7);
+    erode(result, result, Mat(), Point(-1,-1),3);
+    medianBlur(result, result, 7);
+    medianBlur(result, result, 7);
+    img_gray = result;
+    // imshow("preproces", result);
+    // waitKey(3);
+	top_view=img_gray.clone();
+	top_view_rgb = img.clone();	
+	imshow("orig", top_view_rgb);
+	imshow("result", top_view);
+	waitKey(3);
 
+}
+
+void Lanes::preprocess_lab()
+{
 	Mat frame = img.clone();
-	// remove_obstacles(frame);
-
-	// vid >> frame;
 	Mat channels[3];
 	split(frame,channels);
 	//:	imshow("2B-G",2*channels[0] - channels[1]);
@@ -292,9 +187,24 @@ void Lanes::preprocess()
 		dilate(lab,lab,element);
 	img_gray = 	lab;
 	top_view = img_gray.clone();
+	top_view_rgb = img.clone();	
+	imshow("orig", top_view_rgb);
+	imshow("result", top_view);
+	waitKey(3);
 
 }
 
+void Lanes::preprocess_old()
+{
+	remove_grass();
+	Mix_Channel();
+	top_view = img_gray.clone();
+	top_view_rgb = img.clone();
+	imshow("orig", top_view_rgb);
+	imshow("result", top_view);
+	waitKey(3);
+
+}
 
 void Lanes::Intensity_distribution()
 {
@@ -367,197 +277,23 @@ void Lanes::remove_grass()
 			}
 		}
 	img = non_grass;
-	// imshow("remove_grass", non_grass);
-	// waitKey(0);
+	imshow("remove_grass", non_grass);
+	waitKey(3);
 }
 
 
 void Lanes::topview()
 {
-	top_view_rgb = img.clone();	
 	// Mat h = (Mat_<float>(3, 3)<< 3.665649454142774, 5.249642779023947, -2017.634107745852, 0.1725239771632309, 10.74704553239514, -3191.00361122947, 7.864729235797308e-05, 0.006494804637725546, 1);
 	Mat h = (Mat_<float>(3, 3)<<0.9524258265572764, 1.932259226972684, 71.36069918907818, 0.08413921815847476, 3.18697351467409, -77.56300977045593, -2.409361384497643e-05, 0.00403298641581695, 1);
 
-
-	// float scale_factor = 3.4;
-	// cout<<top_view.rows<<' '<<top_view.cols<<endl;
-	// resize(top_view, top_view, Size(960*2, 1200));
-	// resize(top_view_rgb, top_view_rgb, Size(960*2, 1200));
-
 	warpPerspective(top_view, top_view, h, Size(960,600));
 	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960,600));
-	// resize(top_view, top_view, Size(960, 600));
-	// resize(top_view_rgb, top_view_rgb, Size(960, 600));
 
 	imshow("preprocess", top_view);
 	waitKey(10);
 
 }
-/*
-void Lanes::Edge()
-{
-	Mat Gx, Gy, Ga(img.rows,img.cols,CV_8UC1,Scalar(0)), Gb(img.rows,img.cols,CV_8UC1,Scalar(0)), Gc(img.rows,img.cols,CV_8UC1,Scalar(0)), Gd(img.rows,img.cols,CV_8UC1,Scalar(0));
-	// equalizeHist(img_gray, img_gray);     // adjusting the contrast
-	Mat temp = img_gray.clone();
-	for(int i = 0; i < img.rows; i++)  // pixel
-	{
-		for(int j = 0; j < img.cols; j++)
-		{
-			int count=0;
-			for(int m = i-1; m < i+2; m++)  // a kernel
-			{
-				for(int n = j-1; n < j+2; n++)
-				{
-					if(m<0 || n<0 || m>=img.rows || n>=img.cols) continue;   // isvalid condition
-					if(img_gray.at<uchar>(m,n) < INTENSITY_TH) count++;   // erosion condition
-				}
-			}
-			if(count != 0) temp.at<uchar>(i,j)=0;  
-		}
-	}
-	img_gray = temp;
-	vector<vector<Point> > contours;
-	vector<Vec4i> heirarchy;
-	vector<Rect> roi;
-	vector<Mat> roi_img;
-	Mat t=img_gray.clone();
-	
-	Mat t1 = img_gray.clone();
-	
-	cvtColor(t1,t,CV_GRAY2BGR);
-	threshold(t1,t1,0,255,THRESH_BINARY+THRESH_OTSU);
-	Mat element = getStructuringElement( MORPH_RECT,Size( 2*1 + 1, 2*1+1 ),Point( 1, 1 ) ); 
-    int i=5;
-    while(i--)
-       erode(t1,t1,element);
-   	i = 1;
-   	// while(i--)
-    // dilate(t1,t1,element);
-	imshow("thesh",img_gray);
-	//Canny(img_gray,img_gray,50,100,3,0);
-	findContours(t1,contours,heirarchy,CV_RETR_TREE,CV_CHAIN_APPROX_NONE);
-	float resize_factor=1.5;
-	for(int i=0;i<contours.size();i++)
-	{
-		double area=contourArea(contours[i]);
-		if(area<100 || area > (0.1*t1.rows*t1.cols)) continue;
-		drawContours(t,contours,i,Scalar(255,0,0),2,8,heirarchy,0,Point());
-		Rect rect=boundingRect(Mat(contours[i]));
-		int width=rect.br().x-rect.tl().x;
-		int height=rect.br().y-rect.tl().y;
-		Rect roi_latest;
-		Point tl=rect.tl(),br=rect.br();
-		if((width*1.0)/height>1.5f) {
-			tl=rect.tl()-Point(width*0.3*resize_factor,height*1*resize_factor);
-			br=rect.br()+Point(width*0.5*resize_factor,height*0.5*resize_factor);
-			if(!(tl.x>=0))
-				tl.x=0;
-			if(!(tl.y>=0))
-				tl.y=0;
-			if(!(br.x<img.cols))
-				br.x=img.cols-1;
-			if(!(br.y<img.rows))
-				br.y=img.rows-1;
-			}
-		else {
-			// tl=rect.tl()-Point(width*0.3*resize_factor,height*1*resize_factor);
-			// br=rect.br()+Point(width*0.5*resize_factor,height*0.5*resize_factor);
-			tl=rect.tl();
-			br=rect.br();
-		}
-		rectangle(img,tl,br,Scalar(0,255,0),2,8,0);
-		roi_latest=Rect(tl.x,tl.y,br.x-tl.x,br.y-tl.y);
-		
-		roi.push_back(roi_latest);
-		roi_img.push_back(img(roi_latest));
-
-		// imwrite("data/"+to_string(j)+".png",img(roi_latest));
-		j++;
-	}
-
-	//roi_img now contains all the images in it which are to be predicted for lebelling
-	for(int i = 0;i<roi_img.size();i++) {
-		Rect rect = roi[i];
-		//cout << "Check" << endl;
-		Point tl = rect.tl(),br = rect.br();
-		rectangle(img,tl,br,Scalar(0,0,0),2,8,0);
-	//SVM CODE
-	vector< vector < float> > v_descriptorsValues;
- 	vector< vector < Point> > v_locations;
-
- 	resize(roi_img[i], roi_img[i], Size(64,128) );
-
- 	HOGDescriptor d( Size(64,128), Size(16,16), Size(8,8), Size(8,8), 9);
-  	vector< float> descriptorsValues;
-  	vector< Point> locations;
-  	d.compute( roi_img[i], descriptorsValues, Size(0,0), Size(0,0), locations);
-
-  	double predict_label;
-
-    //x = (struct svm_node *) malloc(sizeof(struct svm_node));
-   	prob.l = 1;
-    prob.y = Malloc(double,prob.l); //space for prob.l doubles
-	prob.x = Malloc(struct svm_node *, prob.l); //space for prob.l pointers to struct svm_node
-	x_space = Malloc(struct svm_node, (3780+1) * prob.l); //memory for pairs of index/value
-
-	int j=0; //counter to traverse x_space[i];
-	for (int i=0;i < prob.l; ++i)
-	{
-		//set i-th element of prob.x to the address of x_space[j]. 
-		//elements from x_space[j] to x_space[j+data[i].size] get filled right after next line
-		prob.x[i] = &x_space[j];
-		for (int k=0; k<3780; ++k, ++j)
-		{
-			x_space[j].index=k+1; //index of value
-			x_space[j].value=descriptorsValues[k]; //value
-			// cout<<"x_space["<<j<<"].index = "<<x_space[j].index<<endl;
-			// cout<<"x_space["<<j<<"].value = "<<x_space[j].value<<endl;
-		}
-		x_space[j].index=-1;//state the end of data vector
-		x_space[j].value=0;
-		// cout<<"x_space["<<j<<"].index = "<<x_space[j].index<<endl;
-		// cout<<"x_space["<<j<<"].value = "<<x_space[j].value<<endl;
-		j++;
-
-	}
-
-
-	//set all default parameters for param struct
-	param.svm_type = C_SVC;
-	param.kernel_type = RBF;
-	param.degree = 3;
-	param.gamma = 0;	// 1/num_features
-	param.coef0 = 0;
-	param.nu = 0.5;
-	param.cache_size = 100;
-	param.C = 1;
-	param.eps = 1e-3;
-	param.p = 0.1;
-	param.shrinking = 1;
-	param.probability = 0;
-	param.nr_weight = 0;
-	param.weight_label = NULL;
-	param.weight = NULL;
-
-	double out = svm_predict(model,x_space);
-
-	if(out == 1) {
-	rectangle(img_gray,Point(rect.x,rect.y),Point(rect.x + rect.width,rect.y + rect.height),Scalar(0),-1,8,0);
-	//cvtColor(img,img_gray,CV_BGR2GRAY);
-	}
-	}
-	rectangle(img_gray,Point(0,img.rows*0.75),Point(img.cols-1,img.rows-1),Scalar(0),-1,8,0);
-	line(img,Point(0,img.rows/3),Point(img.cols-1,img.rows/3), Scalar(255,0,0), 2, CV_AA);
-	top_view=img_gray.clone();
-	
-	imshow("erode",img_gray);
-	imshow("t",t);
-	
-}
-
-*/
-
-
 
 vector<double> gen_new_way(Mat img, double a, double lam1, double lam2, double w, vector<double> old_waypoint) {
 
@@ -804,8 +540,6 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 }
 
 
-
-
 void Lanes::parabola()
 {
 	// imshow("normal_top_view_grey", top_view);
@@ -829,12 +563,6 @@ void Lanes::parabola()
 
 	// imshow("temp", temp);
 	// waitKey(5);
-	// IplImage im = temp;
-	// IplImage* image = &im;
-	// image = cvCreateImage(cvSize(top_view.cols, top_view.rows), 8, 3);
-
-	/*IplImage *lab_image = cvCloneImage(image);
-    cvCvtColor(image, lab_image, CV_BGR2Lab);*/
     int w = temp.rows, h = temp.cols;
     int nr_superpixels = 600;
     int nc = 100;
@@ -842,18 +570,6 @@ void Lanes::parabola()
     // double step = sqrt((w * h) / (double) nr_superpixels);
    
 
-    /* Perform the SLIC superpixel algorithm. */
-    // Slic slic;
-    // slic.generate_superpixels(lab_image, step, nc);
-    // slic.create_connectivity(lab_image);
-    
-    // end = clock();
-    // cout<<"\nSlic = "<<(end - start)/1000.0;
-    // /* Display the contours and show the result. */
-    // slic.display_contours(image, CV_RGB(255,0,0));
-    // cvShowImage("slic", image);
-    // imshow("top", top_view);
-    // waitKey(2);
 
     /* gpu accelerated super pixel clustering */
 	// clock_t start, end;
@@ -872,8 +588,8 @@ void Lanes::parabola()
 	segmenter.Tool_GetMarkedImg();
 	Mat marked(temp.rows, temp.cols, CV_8UC4, segmenter.markedImg);
 	Mat mask(temp.rows, temp.cols, CV_32SC1, segmenter.segMask);
-	 imshow("img super pixel cluster marked for threshold settings", marked);
-	 waitKey(5);
+	imshow("img super pixel cluster marked for threshold settings", marked);
+	waitKey(5);
 	// end = clock();
 	// cout<<"segmented\n";
 	// segmenter.~FastImgSeg();
@@ -924,23 +640,8 @@ void Lanes::parabola()
 	    if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
 
 	    //cout << "count_pix" << count_pix[idx] << endl;
-	}
+		}
     }
-
-    /*
-    for (int i = 0; i <= max; i++) {
-	if (count_x[i] == 0 || count_y[i] == 0) continue;
-	count_x[i] /= count_pix[i];
-	count_y[i] /= count_pix[i];
-	if(count_pix[i] < TH_SMALL_SUPERPIXEL) continue;
-	if(count_col[i]/(count_pix[i]*1.0) < TH_MIN_WHITE_REGION) continue;
-	dot.at<uchar>(count_y[i], count_x[i]) = 255;
-	P.push_back(Point(count_x[i], mario.rows-count_y[i]));
-	//cout << "Point P.x" << P.back().x << " y " << P.back().y << endl;
-    }
-    */
-
-
 
     /*
 	mark all the points of those superpixels on mario which:
@@ -951,16 +652,16 @@ void Lanes::parabola()
     vector<Point> Q;
     for(int i = 0; i < top_view.rows; i++)
     {
-	for(int j = 0; j < top_view.cols; j++)
-	{
-	    int idx = mask.at<int>(i/2,j/2);
-	    if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
-	    if(count_pix[idx] == 0) continue;
-	    if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
-	    mario.at<uchar>(i, j) = 255;
-	    Q.push_back(Point(j,mario.rows -i));
+		for(int j = 0; j < top_view.cols; j++)
+		{
+		    int idx = mask.at<int>(i/2,j/2);
+		    if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
+		    if(count_pix[idx] == 0) continue;
+		    if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
+		    mario.at<uchar>(i, j) = 255;
+		    Q.push_back(Point(j,mario.rows -i));
 
-	}
+		}
     }
 
 
@@ -975,52 +676,9 @@ void Lanes::parabola()
 	// cout << "P " << P.back() << endl;
 	dot.at<uchar>(mario.rows-Q[temp].y, Q[temp].x) = 255;
     }
-	
-    //int white_count = 0;
-
-    /*
-    for (int w = i-K/2; w < i+1+K/2; w++) {
-	    for (int e = j-K/2; e < j+1+K/2; e++) {
-		    if (w <0 || w >= mario.rows || e <0 || e>= mario.cols) continue;
-		    if (mario.at<uchar>(w,e) == 255) {
-			    white_count++;
-		    }
-	    }
-    }
-    if (white_count > 1) {
-	    dot.at<uchar>(i,j) = 255;
-	    P.push_back(Point(j, mario.rows-i));
-    }
-    */
-	
 
         imshow("mario", mario);
 
-	/*
-	for(int i = 0; i < top_view.rows; i++)
-	{
-		for(int j = 0; j < top_view.cols; j++)
-		{
-			// if(!i%10 && !j%10)
-			// cout<<i<<' '<<j<<endl;
-			// if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
-			
-			int idx = mask.at<int>(i/2,j/2);
-			//cout<<"Idx : "<<idx<<endl;
-			if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
-			// cout<<(count_col[idx]/(count_pix[idx]*1.0))<<endl;
-			if(count_pix[idx] == 0) continue;
-			if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
-			// circle(dot, Point(j, i),3 ,Scalar(255),-1,1,0);
-			dot.at<uchar>(i, j) = 255;
-			int x = j;
-			int y = top_view.rows - i;
-			P.push_back(Point(x, y));
-			 count_pix[idx] = 0;
-		}
-		// cout<<i<<endl;
-	}
-	*/
 	cout<<"P size = "<<P.size()<<endl;
 
 	// for(int i = 0; i < P.size(); i++)
@@ -1121,46 +779,6 @@ void Lanes::parabola()
 		} 
 		if(flag_width&&abs(w)<5000)
 			width_lanes=width_lanes*0.8 + w*0.2;
-		
-		// for(int p = 0; p < P.size(); p++)
-		// {
-		// 	int flag = 0;
-  //                       int flag_l = 0;
-		// 	for(int x = 0; x < top_view.cols; x++)
-		// 	{
-		// 		int y_l = sqrt(lam*(x - a)), y_r = sqrt(lam2*(x - a - w));
-		// 		// y_l = top_view.rows - y_l;
-		// 		// y_r = top_view.rows - y_r;
-		// 		if(y_l < 0 && y_r < 0) continue;
-		// 		float dist_l = sqrt(pow(x - P[p].x, 2) + pow(y_l - P[p].y, 2));
-		// 		if(dist_l < 50)
-		// 		{
-		// 			flag = 1;
-  //                                       flag_l = 1;
-		// 		}
-		// 		float dist_r = sqrt(pow(x - P[p].x, 2) + pow(y_r - P[p].y, 2));
-		// 		if(dist_r < 50)
-		// 		{
-		// 			if(!flag) flag = 1;
-		// 			else
-		// 			{
-		// 				flag = 0;
-		// 				// comm_count++;
-		// 			}
-		// 		}
-		// 	}
-		// 	if(flag) {
-  //                               score_loc++;
-  //                               if (flag_l) {
-  //                                       score_l_loc++;
-  //                               }
-  //                               else {
-  //                                       score_r_loc++;
-  //                               }
-  //                       } 
-
-		// 	// cout<<score_loc<<endl;
-		// }
 
 		for(int p = 0; p < P.size(); p++)
 		{
@@ -1385,30 +1003,7 @@ void Lanes::parabola()
 	 circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
 	 circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
 
-
-    //set up transformtransf
-    // tf::StampedTransform transform;
-    // tf::TransformListener listener;
-//*******************************************************
-    //****************************************************
-    // try
-    // {
-    //   listener.lookupTransform("base_link", "odom",  
-    //                            ros::Time::now(), transform);
-    // }
-    // catch (tf::TransformException ex){
-    //   ROS_ERROR("%s",ex.what());
-    //   ros::Duration(1.0).sleep();
-    // }
-
 	geometry_msgs::PoseStamped waypoint;
-	//geometry_msgs::PoseStamped waypoint_out;
-
-	// waypoint.header.frame_id = "laser";
-	// waypoint.pose.position.x = (way[1]*3.0/(top_view.rows)) + transform.getOrigin().x();
-	// waypoint.pose.position.y = (-1 * way[0]*3.0/top_view.rows) + transform.getOrigin().y();
-	// waypoint.pose.position.z = 0 + transform.getOrigin().z();
-	// float theta = way[2] + tf::getYaw(transform.getRotation());
 
     if(waypoint_on_obstacle(top_view_rgb, way))
     {
@@ -1432,17 +1027,6 @@ void Lanes::parabola()
 	waypoint.pose.orientation.w = frame_qt.w();
 
 
-	//make the laser->odom transform
-	//listener.transformPoint("odom",waypoint,waypoint_out);
-
-
-
-	// tf::Quaternion frame_qt = tf::createQuaternionFromYaw(theta);
-	// waypoint.pose.orientation.x = frame_qt.x();
-	// waypoint.pose.orientation.y = frame_qt.y();
-	// waypoint.pose.orientation.z = frame_qt.z();
-	// waypoint.pose.orientation.w = frame_qt.w();
-	
 	counter++;
 	if(counter > 1000)
 		counter = 0;
@@ -1479,16 +1063,6 @@ float* Lanes::parabola_params(Point *points)   //mode: 1-6 => llr,lrl,rll,lrr,rl
 	float *param;
 	param = new float [4];
 	
-	// float dist1,dist2;
-	// dist1 = sqrt(pow(p1.x-p2.x , 2) + pow(p1.y-p2.y, 2));
-	// dist2 = sqrt(pow(p4.x-p3.x , 2) + pow(p4.y-p3.y, 2));
-
-	// if(dist1 < 0 || dist2 < 0){
-	// 	param[0]=param[1]=param[2]=param[3]=0;
-	// 	return param;
-	// } 
-
-
 	p1 = points[0];
 	p2 = points[1];
 	p3 = points[2];
