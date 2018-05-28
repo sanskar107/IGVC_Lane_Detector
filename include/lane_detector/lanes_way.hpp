@@ -33,13 +33,13 @@
 #define INTENSITY_TH 170
 #define PI 3.14159265
 
-#define TH_REM_GRASS 200
+#define TH_REM_GRASS 190
 #define TH_DOT 160
-#define TH_SMALL_SUPERPIXEL 15 
+#define TH_SMALL_SUPERPIXEL 8 
 #define TH_MIN_WHITE_REGION 0.6
-#define NUM_ITER 2000
+#define NUM_ITER 1000
 #define PPM 133.33
-#define DIST_CHECK 190
+#define DIST_CHECK 100
 #define KERNEL_SIZE 200
 #define JUMP 500
 #define MIN_GAP_BETWEEN_OBSTACLE_AND_LANE 150 
@@ -61,7 +61,7 @@ struct svm_parameter param;
 
 int wide = 500;
 int no_of_random_points_for_dot = 200;
-int dist_for_inlier = 10;
+int dist_for_inlier = 15;
 
 typedef struct
 {
