@@ -1,0 +1,54 @@
+add these at end of ransac
+
+    if(a_gl >= img.cols/2 && (a_gl + w_gl) >= img.cols/2)
+    w_gl = 10001;
+    if(a_gl < img.cols/2 && (a_gl + w_gl) < img.cols/2)
+    w_gl = 10002;
+
+    if (fabs(w_gl) < 225) w_gl = 10003;
+
+//detecting horizontal lanes
+vector<Vec4i> lines;
+HoughLinesP(mario, lines,1, CV_PI/180, 80, 30, 10);
+
+for (int i = 0; i < lines.size(); i++) {
+double angle = atan(lines[i][1] - lines[i][3])/(lines[i][0] - lines[i][2]);
+if (fabs(angle) < degree_for_horizontal*PI/180) {
+    way.clear();
+    if (is_prev_single_left) {
+	way.push_back(3*mario.cols/4);
+	way.push_back(mario.rows - (lines[i][1] + mario.rows)/2);
+	way.push_back(0);
+	break;
+    }
+    else {
+	way.push_back(mario.cols/4);
+	way.push_back(mario.rows - (lines[i][1] + mario.rows)/2);
+	way.push_back(PI);
+	break;
+    }
+}
+}
+
+change centroid function to this:
+
+Point centroid(Mat img, double a, double lam)
+{
+
+    double sum_x = 0;
+    int no_of_x = 0;
+    for (int j = 0; j < img.rows; j++) {
+	float y = img.rows-j;
+	float x = y*y/lam + a;
+	if (x < 0 || x >= img.cols) continue;
+	sum_x += x;
+	no_of_x++;
+    }
+
+    Point centroid;
+    centroid.x = sum_x/no_of_x;
+    centroid.y = img.rows/2;
+    return centroid;		
+}
+
+
