@@ -46,9 +46,9 @@
 #define NAV_GAP 120
 #define LAMBDA_THRESHOLD_FOR_HORIZONTAL_LANE 1
 #define MIN_INLIER_DIST_THRESH 1500
-#define JUMP_OF_WAYPOINT 10
+#define JUMP_OF_WAYPOINT 20
 #define extrapolation_factor 5
-#define frames_to_skip_when_obstacle_detected 30
+#define frames_to_skip_when_obstacle_detected 20
 
 #define THRESHOLD_FOR_ANY_LANE 70
 #define LANE_THRESHOLD 70

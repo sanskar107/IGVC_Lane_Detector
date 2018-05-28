@@ -437,7 +437,7 @@ bool is_lane_horizontal (Mat img, float a, float lam) {
 
 vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 {
-    float range = 2;
+    float range = 3;
     float offset = 0;
 
     if(a >= img.cols/2 && (a + w) >= img.cols/2)
@@ -748,7 +748,7 @@ void Lanes::parabola()
 	    first_frame = true;
 	    //vector<double> waypoint;
 	    way.push_back(top_view_rgb.cols/2);
-	    way.push_back(1*PPM);
+	    way.push_back(2*PPM);
 	    way.push_back(PI/2);
 	    flag_no_lane = 1;
 	}
@@ -1168,11 +1168,6 @@ void Lanes::parabola()
 	waypoint.pose.orientation.z = frame_qt.z();
 	waypoint.pose.orientation.w = frame_qt.w();
 
-	if (++obstacle_detected) {
-	    return;
-	}
-
-
 	counter++;
 	if(counter > 1000)
 	    counter = 1;
@@ -1194,8 +1189,13 @@ void Lanes::parabola()
 	LaserScan scan = imageConvert(mario);
 	lanes_pub.publish(scan);
 
-	waypoint_pub.publish(waypoint);
-	cout<<"Published\n";
+	++obstacle_detected;
+	
+	if(counter % 15 == 0 && obstacle_detected >= 0)
+	{
+		waypoint_pub.publish(waypoint);
+		cout<<"Published\n";
+	}
 	// imshow("Result showing dot image", dot);
 	// imshow("Res2", top_view_rgb);
 	// waitKey(10);
