@@ -60,7 +60,7 @@ struct svm_node *x_space;
 struct svm_problem prob;
 struct svm_parameter param;
 
-int wide = 500;
+int wide = 300;
 int no_of_random_points_for_dot = 200;
 int dist_for_inlier = 10;
 
@@ -88,7 +88,7 @@ vector<int> obstacle_coords (Mat img, vector<double> old_way);
 vector<double> gen_new_way(Mat top_view_rgb,double a_gl,double lam_gl,double lam2_gl,double w_gl, vector<double>);
 bool waypoint_on_obstacle(Mat img, vector<double>);
 bool is_lane_horizontal (Mat img, float a, float lam1);
-
+Mat checkPothole(Mat);
 MatrixXd homo(3,3);  
 sensor_msgs::LaserScan imageConvert(cv::Mat image);
 
