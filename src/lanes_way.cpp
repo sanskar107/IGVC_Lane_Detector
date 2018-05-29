@@ -452,6 +452,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
     if(is_lane_single)
     {
 	Point center_single = centroid(img,a,lam1);
+
 	//check left or right if it is first frame
 	if(first_frame)
 	{
@@ -463,7 +464,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	else if (a < 0.42*img.cols) is_lane_left = true;
 	else if (a > 0.58*img.cols) is_lane_left = false;
 
-	//check left or right if prev is single
+	//check left or right if prev is singles
 	else if(is_prev_single)
 	{
 	    if(is_prev_single_left)
@@ -606,8 +607,7 @@ void Lanes::parabola()
 	// waitKey(5);
 	// cvtColor(top_view_rgb, top_view, CV_BGR2GRAY);
 	Mat temp(top_view.rows, top_view.cols, CV_8UC3, Scalar(0,0,0));
-	Mat mario(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));  
-
+	Mat mario(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));
 	for(int i = 0; i < top_view.rows; i++)
 		for(int j = 0; j < top_view.cols; j++)
 			if(top_view.at<uchar>(i,j) > TH_DOT)
@@ -688,17 +688,17 @@ void Lanes::parabola()
     /*	calculating the number of pixels of pixels in each superpixel and the number ofpixels that pass the colour threshold	*/
     for(int i = 0; i < top_view.rows; i++)
     {
-	for(int j = 0; j < top_view.cols; j++)
-	{
-	    if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
-	    int idx = mask.at<int>(i/2,j/2);
-	    count_pix[idx]++;
-	    count_x[idx] += j;
-	    count_y[idx] += i;
-	    if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
+		for(int j = 0; j < top_view.cols; j++)
+		{
+		    if(i/2 >= mask.rows || j/2 >= mask.cols) continue;
+		    int idx = mask.at<int>(i/2,j/2);
+		    count_pix[idx]++;
+		    count_x[idx] += j;
+		    count_y[idx] += i;
+		    if(top_view.at<uchar>(i, j) > TH_DOT) count_col[idx]++;
 
-	    //cout << "count_pix" << count_pix[idx] << endl;
-	}
+		    //cout << "count_pix" << count_pix[idx] << endl;
+		}
     }
 
     /*
@@ -710,30 +710,32 @@ void Lanes::parabola()
     vector<Point> Q;
     for(int i = 0; i < top_view.rows; i++)
     {
-	for(int j = 0; j < top_view.cols; j++)
-	{
-	    int idx = mask.at<int>(i/2,j/2);
-	    if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
-	    if(count_pix[idx] == 0) continue;
-	    if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
-	    mario.at<uchar>(i, j) = 255;
-	    Q.push_back(Point(j,mario.rows -i));
+		for(int j = 0; j < top_view.cols; j++)
+		{
+		    int idx = mask.at<int>(i/2,j/2);
+		    if(count_pix[idx] < TH_SMALL_SUPERPIXEL) continue;
+		    if(count_pix[idx] == 0) continue;
+		    if(count_col[idx]/(count_pix[idx]*1.0) < TH_MIN_WHITE_REGION) continue;
+		    mario.at<uchar>(i, j) = 255;
+		    Q.push_back(Point(j,mario.rows -i));
 
-	}
+		}
     }
 
+    Mat mario_pub = mario.clone();
+    mario = checkPothole(mario);
     /*	K is the kernel size and 
      	dist_for_inlier is min(|dist in x from lane|, |dist in y|) for which a point is to be considered an inlier	*/
     // cout<<Q.size();
 
     for (int i = 0; i < no_of_random_points_for_dot; i++) {
-	// cout << "Q " << Q[i] << endl;
-	if(Q.size() == 0) continue;
-	int temp =  abs(random()%Q.size());
-	// cout<<i<<' '<<endl;
-	P.push_back(Q[temp]);
-	// cout << "P " << P.back() << endl;
-	dot.at<uchar>(mario.rows-Q[temp].y, Q[temp].x) = 255;
+		// cout << "Q " << Q[i] << endl;
+		if(Q.size() == 0) continue;
+		int temp =  abs(random()%Q.size());
+		// cout<<i<<' '<<endl;
+		P.push_back(Q[temp]);
+		// cout << "P " << P.back() << endl;
+		dot.at<uchar>(mario.rows-Q[temp].y, Q[temp].x) = 255;
     }
 
 
@@ -1176,38 +1178,41 @@ void Lanes::parabola()
 	//detecting horizontal lanes
 	Mat linesd(mario.rows, mario.cols, CV_8UC1, Scalar(0));
 	vector<Vec4i> lines;
-	HoughLinesP(mario, lines,1, CV_PI/180, 80, 30, 10);
+	HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
 
 	int index = 0;
 	double maxLenTemp = 0, maxLen = 0;
 
-	if (lines.size()) {
+	if (lines.size())
+	{
 
-	    for (int i = 0; i < lines.size();i++) {
-
-		double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
-		if (maxLenTemp > maxLen) {
-		    index = i;
-		    maxLen = maxLenTemp;
-		}
+	    for (int i = 0; i < lines.size();i++)
+	    {
+			double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
+			if (maxLenTemp > maxLen)
+			{
+			    index = i;
+			    maxLen = maxLenTemp;
+			}
 	    }
 
 	    double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
-	    if (fabs(angle) < degree_for_horizontal*PI/180) {
-		cout << "hough angle " << (fabs(angle)*180)/PI << endl;
-		cout << "HORIZONTAL LINE DETECTED\n";
-		line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
-		way.clear();
-		if (is_prev_single_left) {
-		    way.push_back(3*mario.cols/4);
-		    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-		    way.push_back(0);
-		}
-		else {
-		    way.push_back(mario.cols/4);
-		    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-		    way.push_back(PI);
-		}
+	    if (fabs(angle) < degree_for_horizontal*PI/180)
+	    {
+			cout << "hough angle " << (fabs(angle)*180)/PI << endl;
+			cout << "HORIZONTAL LINE DETECTED\n";
+			line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
+			way.clear();
+			if (is_prev_single_left) {
+			    way.push_back(3*mario.cols/4);
+			    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+			    way.push_back(0);
+			}
+			else {
+			    way.push_back(mario.cols/4);
+			    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+			    way.push_back(PI);
+			}
 	    }
 	}
 	imshow("lines", linesd);
@@ -1231,11 +1236,11 @@ void Lanes::parabola()
 	}
 
 	if ((fabs(way[0] - waypoint_prev[0]) > JUMP_OF_WAYPOINT) && !flag_no_lane) {
-	    way[0] = 0.85*waypoint_prev[0] + 0.15*way[0];
+	    way[0] = 0.5*waypoint_prev[0] + 0.5*way[0];
 	}
 
 	if (fabs(way[1] - waypoint_prev[1]) > JUMP_OF_WAYPOINT && !flag_no_lane) {
-	    way[1] = 0.85*waypoint_prev[1] + 0.15*way[1];
+	    way[1] = 0.5*waypoint_prev[1] + 0.5*way[1];
 	}
 
 	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
@@ -1279,7 +1284,7 @@ void Lanes::parabola()
 	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal/", 10);
 	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 1);
 
-	LaserScan scan = imageConvert(mario);
+	LaserScan scan = imageConvert(mario_pub);
 	lanes_pub.publish(scan);
 
 	++obstacle_detected;
@@ -1656,3 +1661,32 @@ vector<int> obstacle_coords(Mat img, vector<double> old_way) {
         return obstacles[0];
 }
 
+
+Mat checkPothole(Mat i)
+{
+	Mat img = i.clone();
+	// cvtColor(img,img,CV_BGR2GRAY);
+	Mat out_pot = img.clone();
+	Mat t = img.clone();
+	GaussianBlur(t,t,Size(9,9),2,2);
+	Canny(t,t,50,100,3);
+
+	vector<vector<Point> > contours,approx;
+	vector<Vec4i> heirarchy;
+	findContours(t,contours,heirarchy,CV_RETR_TREE,CV_CHAIN_APPROX_NONE);
+
+	approx.resize(contours.size());
+	for(int k = 0;k < approx.size();k++) {
+		approxPolyDP(Mat(contours[k]),approx[k],3,true);
+	}
+
+	for(int i = 0;i < approx.size();i++) {
+		if(approx.size() > 15) { //it is a circle
+			drawContours(out_pot,approx,i,Scalar(0,0,0),CV_FILLED);
+		}
+	}
+
+	// imshow("POT",out_pot);
+	// waitKey(1);
+	return out_pot;
+}
