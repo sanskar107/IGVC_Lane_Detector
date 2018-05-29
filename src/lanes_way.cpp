@@ -461,8 +461,8 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	    else is_lane_left=false;
 	}
 
-	else if (a < 0.35*img.cols) is_lane_left = true;
-	else if (a > 0.65*img.cols) is_lane_left = false;
+	else if (a < 0.42*img.cols) is_lane_left = true;
+	else if (a > 0.58*img.cols) is_lane_left = false;
 
 	//check left or right if prev is single
 	else if(is_prev_single)
@@ -1013,6 +1013,14 @@ void Lanes::parabola()
         //         flag_no_lane = 1;
         // }
 
+    if(a_gl >= img.cols/2 && (a_gl + w_gl) >= img.cols/2)
+	    w_gl = 10001;
+    if(a_gl < img.cols/2 && (a_gl + w_gl) < img.cols/2)
+	    w_gl = 10002;
+
+	if (fabs(w_gl) < 225) w_gl = 10003;
+
+
 	cout<<"w = "<<w_gl<<" a = "<<a_gl<<" lam = "<<lam_gl<<"lam2 = "<<lam2_gl<<endl;
 
 	//printing lanes
@@ -1124,6 +1132,35 @@ void Lanes::parabola()
 	    way = gen_new_way(top_view_rgb, a_gl, lam_gl, lam2_gl, w_gl, way);
 	    obstacle_detected = -1*frames_to_skip_when_obstacle_detected;
 	}
+
+
+
+	//detecting horizontal lanes
+	Mat linesd(mario.rows, mario.cols, CV_8UC1, Scalar(0));
+	vector<Vec4i> lines;
+	HoughLinesP(mario, lines,1, CV_PI/180, 80, 30, 10);
+
+	for (int i = 0; i < lines.size(); i++) {
+	double angle = atan(lines[i][1] - lines[i][3])/(lines[i][0] - lines[i][2]);
+	if (fabs(angle) < degree_for_horizontal*PI/180) {
+        line(linesd, Point(lines[i][0],lines[i][1]), Point(lines[i][2],lines[i][3]) , Scalar(255), 1, 8, 0);
+	    way.clear();
+	    if (is_prev_single_left) {
+		way.push_back(3*mario.cols/4);
+		way.push_back(mario.rows - (lines[i][1] + mario.rows)/2);
+		way.push_back(0);
+		break;
+	    }
+	    else {
+		way.push_back(mario.cols/4);
+		way.push_back(mario.rows - (lines[i][1] + mario.rows)/2);
+		way.push_back(PI);
+		break;
+	    }
+	}
+	}
+	imshow("lines", linesd);
+	waitKey(2);
 
 
     /*
@@ -1458,7 +1495,7 @@ void Lanes::remove_obstacles() {
         //waitKey(10);
 }
 
-
+/*
 Point centroid(Mat img, double a, double lam)
 {
 	double x1,x2;
@@ -1476,6 +1513,26 @@ Point centroid(Mat img, double a, double lam)
 	centroid.x=(x1+x2)/2;
 	centroid.y=img.rows/2;
 	return centroid;		
+}
+*/
+
+Point centroid(Mat img, double a, double lam)
+{
+
+    double sum_x = 0;
+    int no_of_x = 0;
+    for (int j = 0; j < img.rows; j++) {
+	float y = img.rows-j;
+	float x = y*y/lam + a;
+	if (x < 0 || x >= img.cols) continue;
+	sum_x += x;
+	no_of_x++;
+    }
+
+    Point centroid;
+    centroid.x = sum_x/no_of_x;
+    centroid.y = img.rows/2;
+    return centroid;		
 }
 
 

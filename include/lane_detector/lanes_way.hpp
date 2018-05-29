@@ -30,28 +30,29 @@
 
 #define W 400
 #define SUBSTRACTION_CONSTANT 30
-#define INTENSITY_TH 170
+#define INTENSITY_TH 180
 #define PI 3.14159265
 
-#define TH_REM_GRASS 190
-#define TH_DOT 160
-#define TH_SMALL_SUPERPIXEL 8 
-#define TH_MIN_WHITE_REGION 0.6
-#define NUM_ITER 1000
+#define TH_REM_GRASS 210
+#define TH_DOT 180
+#define TH_SMALL_SUPERPIXEL 5
+#define TH_MIN_WHITE_REGION 0.5
+#define NUM_ITER 2000
 #define PPM 133.33
-#define DIST_CHECK 100
+#define DIST_CHECK 133
 #define KERNEL_SIZE 200
 #define JUMP 500
 #define MIN_GAP_BETWEEN_OBSTACLE_AND_LANE 150 
 #define NAV_GAP 120
 #define LAMBDA_THRESHOLD_FOR_HORIZONTAL_LANE 1
 #define MIN_INLIER_DIST_THRESH 1500
-#define JUMP_OF_WAYPOINT 20
+#define JUMP_OF_WAYPOINT 15
 #define extrapolation_factor 5
-#define frames_to_skip_when_obstacle_detected 20
+#define frames_to_skip_when_obstacle_detected 10
+#define degree_for_horizontal 20
 
-#define THRESHOLD_FOR_ANY_LANE 70
-#define LANE_THRESHOLD 70
+#define THRESHOLD_FOR_ANY_LANE 30
+#define LANE_THRESHOLD 30
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 struct svm_model* model;
@@ -61,7 +62,7 @@ struct svm_parameter param;
 
 int wide = 500;
 int no_of_random_points_for_dot = 200;
-int dist_for_inlier = 15;
+int dist_for_inlier = 10;
 
 typedef struct
 {
