@@ -3,7 +3,7 @@
 int main(int argc, char** argv)
 {
 
-	cout<<"running"<<endl;
+	cout<<"running_wwe"<<endl;
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
@@ -449,7 +449,6 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
     vector<double> way;
     is_lane_single=abs(w)>img.cols;
 
-    //if the lane is a single lane
     if(is_lane_single)
     {
 	Point center_single = centroid(img,a,lam1);
@@ -500,22 +499,29 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	is_prev_single_left=is_lane_left;
 
 	//calculate waypoint if right lane
-	if(!is_lane_left)
+
+
+	if(!is_lane_left) 
 	{
 	    cout << "only right lane visible\n";
 
 	    float grad = heading(img, a, lam1); //	lam1/((range - offset)*2*PPM);
 	    float y, x;
+	    double theta = atan(-(2*range*PPM)/lam1); //-PI/2 to PI/2 from +ive x axis of waypoint definition
+
+	    x = pow(range*PPM, 2)/lam1 + a - (wide/2)*cos(theta);
+	    //x = pow((y/PPM - offset)*PPM, 2)/lam1 + a - (wide/2);
 	    if (grad > PI/4 && grad < (3*PI)/4) {
-		y = range*PPM;
+		    //y = range*PPM;
+		    y = range*PPM - (wide/2)*sin(theta);
 	    }
 	    else {
 		y = 100;
 	    }
     
-	    x = pow((y/PPM - offset)*PPM, 2)/lam1 + a - wide/2;
 	    // way.push_back(x);			
 	    // way.push_back(y); 
+	    way.clear();
 	    way.push_back(x);			
 	    way.push_back(y); 
 
@@ -531,15 +537,21 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	{
 	    cout<<"only left lane visible\n";
 
-	    float y = 100;
+	    float y = 100, x;
 	    float grad = heading(img, a, lam1);//	lam1/((range - offset)*2*PPM);
 
+	    double theta = atan(-(2*range*PPM)/lam1); //-PI/2 to PI/2 from +ive x axis of waypoint definition
+
+	    x = pow(range*PPM, 2)/lam1 + a + (wide/2)*cos(theta);
+	    //x = pow((y/PPM - offset)*PPM, 2)/lam1 + a + (wide/2);
 	    if (grad > PI/4 && grad < (3*PI)/4) {
-		y = range*PPM;
+		y = range*PPM + (wide/2)*sin(theta);
+		//y = range*PPM;
+		//y = range*PPM;
 	    }
-	    float x = pow((y/PPM - offset)*PPM, 2)/lam1 + a + wide/2;
 	    // way.push_back(x);
 	    // way.push_back(y);
+	    way.clear();
 	    way.push_back(x);			
 	    way.push_back(y); 
 
@@ -550,7 +562,6 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	    return way;
 
 	}
-
     }
 
     //two lanes
@@ -1119,8 +1130,6 @@ void Lanes::parabola()
 	// way.push_back(0.1);
 	// way.push_back(0.1);
 	// way.push_back(0.1);
-	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
-	cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
 	//arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
 	//arrowedLine(dot, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(255), 3);
 
@@ -1133,7 +1142,7 @@ void Lanes::parabola()
 	    obstacle_detected = -1*frames_to_skip_when_obstacle_detected;
 	}
 
-
+	/*
 
 	//detecting horizontal lanes
 	Mat linesd(mario.rows, mario.cols, CV_8UC1, Scalar(0));
@@ -1161,7 +1170,51 @@ void Lanes::parabola()
 	}
 	imshow("lines", linesd);
 	waitKey(2);
+	*/
 
+	
+	//detecting horizontal lanes
+	Mat linesd(mario.rows, mario.cols, CV_8UC1, Scalar(0));
+	vector<Vec4i> lines;
+	HoughLinesP(mario, lines,1, CV_PI/180, 80, 30, 10);
+
+	int index = 0;
+	double maxLenTemp = 0, maxLen = 0;
+
+	if (lines.size()) {
+
+	    for (int i = 0; i < lines.size();i++) {
+
+		double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
+		if (maxLenTemp > maxLen) {
+		    index = i;
+		    maxLen = maxLenTemp;
+		}
+	    }
+
+	    double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
+	    if (fabs(angle) < degree_for_horizontal*PI/180) {
+		cout << "hough angle " << (fabs(angle)*180)/PI << endl;
+		cout << "HORIZONTAL LINE DETECTED\n";
+		line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
+		way.clear();
+		if (is_prev_single_left) {
+		    way.push_back(3*mario.cols/4);
+		    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+		    way.push_back(0);
+		}
+		else {
+		    way.push_back(mario.cols/4);
+		    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+		    way.push_back(PI);
+		}
+	    }
+	}
+	imshow("lines", linesd);
+	waitKey(2);
+
+
+	
 
     /*
     if (obstacle_detected > 0) {
@@ -1178,12 +1231,15 @@ void Lanes::parabola()
 	}
 
 	if ((fabs(way[0] - waypoint_prev[0]) > JUMP_OF_WAYPOINT) && !flag_no_lane) {
-	    way[0] = 0.9*waypoint_prev[0] + 0.1*way[0];
+	    way[0] = 0.85*waypoint_prev[0] + 0.15*way[0];
 	}
 
 	if (fabs(way[1] - waypoint_prev[1]) > JUMP_OF_WAYPOINT && !flag_no_lane) {
-	    way[1] = 0.9*waypoint_prev[1] + 0.1*way[1];
+	    way[1] = 0.85*waypoint_prev[1] + 0.15*way[1];
 	}
+
+	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
+	cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
 
 	circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
 	circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
