@@ -28,6 +28,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#define SHOW 1
 #define W 400
 #define SUBSTRACTION_CONSTANT 30
 #define INTENSITY_TH 160
@@ -125,7 +126,6 @@ struct quadratic
 };
 
 int j=0,frame_skip=-1;
-vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w);
 bool first_f=true;
 int counter = 0;
 vector<double> old_waypoint;
@@ -179,6 +179,8 @@ public:
 	vector<double> generateWaypoint(Mat img,double a,double lm_1,double lm_2,double w);
 	vector<double> generateWayPoint_2(Mat img,double a,double lm_1,double lm_2, double w);
 	vector<double> quadraticFit(vector<Point> *data1);
+	vector<double> gen_way(Mat img, Mat mario, float a, float lam1, float lam2, float w);
+
 
 };
 
