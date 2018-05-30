@@ -3,7 +3,7 @@
 int main(int argc, char** argv)
 {
 
-	cout<<"running_wwe"<<endl;
+	cout<<"running_wwe_latest"<<endl;
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
@@ -565,12 +565,12 @@ vector<double> Lanes::gen_way(Mat img, Mat mario, float a, float lam1, float lam
 					    if (is_prev_single_left) {
 						way.push_back(3*mario.cols/4);
 						way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-						way.push_back(0);
+						way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
 					    }
 					    else {
 						way.push_back(mario.cols/4);
 						way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-						way.push_back(PI);
+						way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
 					    }
 					    is_lane_left = is_prev_single_left;
 				}
@@ -1287,9 +1287,9 @@ void Lanes::parabola()
 	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
 	cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
 
-	circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
+	circle(top_view_rgb, Point(way[0], dot.rows - way[1]),20,Scalar(255, 0, 0),-1,8,0);
 	circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
-
+	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
 	imshow("top view rgb with dot showing waypoint", top_view_rgb);
 	waitKey(2);
 	if (SHOW) {

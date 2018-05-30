@@ -61,7 +61,7 @@ struct svm_node *x_space;
 struct svm_problem prob;
 struct svm_parameter param;
 
-int wide = 300;
+int wide = 500;
 int no_of_random_points_for_dot = 200;
 int dist_for_inlier = 10;
 
