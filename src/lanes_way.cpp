@@ -69,7 +69,7 @@ Lanes::Lanes(Mat img)
 {
 	if (SHOW) {
 	    imshow("img", img);
-	    waitkey(2);
+	    waitKey(2);
 	}
 	resize(img, img, Size(960, 600));
 	// imshow("img", img);
@@ -457,7 +457,7 @@ bool is_lane_horizontal (Mat img, float a, float lam) {
 	
 	//detecting horizontal lanes
 	vector<Vec4i> lines;
-	HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
+	HoughLinesP(img, lines,1, CV_PI/180, 40, 30, 10);
 
 	int index = 0;
 	double maxLenTemp = 0, maxLen = 0;
@@ -482,9 +482,10 @@ bool is_lane_horizontal (Mat img, float a, float lam) {
 	    }
 	    return false;
 
+	}
 }
 
-vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
+vector<double> Lanes::gen_way(Mat img, Mat mario, float a, float lam1, float lam2, float w)
 {
     float range = 3;
     float offset = 0;
@@ -500,195 +501,189 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 
     if(is_lane_single)
     {
-	Point center_single = centroid(img,a,lam1);
+		Point center_single = centroid(img,a,lam1);
 
-	//check left or right if it is first frame
-	if(first_frame)
-	{
-	    first_frame=false;
-	    if (is_bottom_at_left(img, a)) is_lane_left=true;
-	    else is_lane_left=false;
-	}
-
-	else if (a < 0.42*img.cols) is_lane_left = true;
-	else if (a > 0.58*img.cols) is_lane_left = false;
-
-	//check left or right if prev is singles
-	else if(is_prev_single)
-	{
-	    if(is_prev_single_left)
-		is_lane_left=true;	
-	    else
-		is_lane_left=false;
-	}
-	//check left or right if prev frame had 2 lanes
-	else
-	{
-	    if(abs(left_prev_x-center_single.x)<abs(right_prev_x-center_single.x))
-		is_lane_left=true;
-	    else
-		is_lane_left=false;	
-	}
-	
-	//if lane is horizontal
-	if (is_lane_horizontal(img, a, lam1) && is_prev_single) {
-
-	    //detecting horizontal lanes
-	    vector<Vec4i> lines;
-	    HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
-
-	    int index = 0;
-	    double maxLenTemp = 0, maxLen = 0;
-
-	    if (lines.size())
-	    {
-
-		for (int i = 0; i < lines.size();i++)
+		//check left or right if it is first frame
+		if(first_frame)
 		{
-			    double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
-			    if (maxLenTemp > maxLen)
-			    {
-				index = i;
-				maxLen = maxLenTemp;
-			    }
+		    first_frame=false;
+		    if (is_bottom_at_left(img, a)) is_lane_left=true;
+		    else is_lane_left=false;
 		}
 
-		double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
-		if (fabs(angle) < degree_for_horizontal*PI/180)
+		else if (a < 0.42*img.cols) is_lane_left = true;
+		else if (a > 0.58*img.cols) is_lane_left = false;
+
+		//check left or right if prev is singles
+		else if(is_prev_single)
 		{
-			    cout << "hough angle " << (fabs(angle)*180)/PI << endl;
-			    cout << "HORIZONTAL LINE DETECTED\n";
-			    line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
-			    way.clear();
-			    if (is_prev_single_left) {
-				way.push_back(3*mario.cols/4);
-				way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-				way.push_back(0);
-			    }
-			    else {
-				way.push_back(mario.cols/4);
-				way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-				way.push_back(PI);
-			    }
-			    is_lane_left = is_prev_single_left;
+		    if(is_prev_single_left)
+			is_lane_left=true;	
+		    else
+			is_lane_left=false;
 		}
-	    }
+		//check left or right if prev frame had 2 lanes
+		else
+		{
+		    if(abs(left_prev_x-center_single.x)<abs(right_prev_x-center_single.x))
+			is_lane_left=true;
+		    else
+			is_lane_left=false;	
+		}
 
-	    /*
-	    if (is_lane_left) {
-		way.push_back(img.cols);
-		way.push_back(sqrt(fabs(lam1*(img.cols-a))) - wide/2);
-		way.push_back(heading(img, a, lam1));
-	    }
-	    else {
-		way.push_back(0);
-		way.push_back(sqrt(fabs(lam1*a))-wide/2);
-		way.push_back(heading(img, a, lam1));
-	    }
-	    */
+		is_prev_single=true;
+		//if lane is horizontal
+		if (is_lane_horizontal(mario, a, lam1) && is_prev_single) {
 
-	}
+		    //detecting horizontal lanes
+		    vector<Vec4i> lines;
+		    HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
 
-	is_prev_single=true;
-	is_prev_single_left=is_lane_left;
+		    int index = 0;
+		    double maxLenTemp = 0, maxLen = 0;
 
-	//calculate waypoint if right lane
+		    if (lines.size())
+		    {
 
+				for (int i = 0; i < lines.size();i++)
+				{
+					    double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
+					    if (maxLenTemp > maxLen)
+					    {
+						index = i;
+						maxLen = maxLenTemp;
+					    }
+				}
 
-	else if(!is_lane_left) 
-	{
-	    cout << "only right lane visible\n";
+				double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
+				if (fabs(angle) < degree_for_horizontal*PI/180)
+				{
+					    cout << "hough angle " << (fabs(angle)*180)/PI << endl;
+					    cout << "HORIZONTAL LINE DETECTED\n";
+					    line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
+					    way.clear();
+					    if (is_prev_single_left) {
+						way.push_back(3*mario.cols/4);
+						way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+						way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
+					    }
+					    else {
+						way.push_back(mario.cols/4);
+						way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+						way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
+					    }
+					    is_lane_left = is_prev_single_left;
+				}
+	   		}
+	   	}
+		    /*
+		    if (is_lane_left) {
+			way.push_back(img.cols);
+			way.push_back(sqrt(fabs(lam1*(img.cols-a))) - wide/2);
+			way.push_back(heading(img, a, lam1));
+		    }
+		    else {
+			way.push_back(0);
+			way.push_back(sqrt(fabs(lam1*a))-wide/2);
+			way.push_back(heading(img, a, lam1));
+		    }
+		    */
 
-	    float grad = heading(img, a, lam1); //	lam1/((range - offset)*2*PPM);
-	    float y, x;
-	    double theta = atan(-(2*range*PPM)/lam1); //-PI/2 to PI/2 from +ive x axis of waypoint definition
+		//calculate waypoint if right lane
+		else if(!is_lane_left) 
+		{
+		    cout << "only right lane visible\n";
 
-	    x = pow(range*PPM, 2)/lam1 + a - (wide/2)*cos(theta);
-	    //x = pow((y/PPM - offset)*PPM, 2)/lam1 + a - (wide/2);
-	    if (grad > PI/4 && grad < (3*PI)/4) {
-		    //y = range*PPM;
-		    y = range*PPM - (wide/2)*sin(theta);
-	    }
-	    else {
-		y = 100;
-	    }
-    
-	    // way.push_back(x);			
-	    // way.push_back(y); 
-	    way.clear();
-	    way.push_back(x);			
-	    way.push_back(y); 
+		    float grad = heading(img, a, lam1); //	lam1/((range - offset)*2*PPM);
+		    float y, x;
+		    double theta = atan(-(2*range*PPM)/lam1); //-PI/2 to PI/2 from +ive x axis of waypoint definition
 
-	    //grad = atan(grad);
-	    // grad = grad < 0 ? PI + grad : grad;
-	    // grad = grad < 0 ? grad + 3.14/12 : grad - 3.14/12;
-	    way.push_back(grad);
-	    return way;
-	}
+		    x = pow(range*PPM, 2)/lam1 + a - (wide/2)*cos(theta);
+		    //x = pow((y/PPM - offset)*PPM, 2)/lam1 + a - (wide/2);
+		    if (grad > PI/4 && grad < (3*PI)/4) {
+			    //y = range*PPM;
+			    y = range*PPM - (wide/2)*sin(theta);
+		    }
+		    else {
+			y = 100;
+		    }
+	    
+		    // way.push_back(x);			
+		    // way.push_back(y); 
+		    way.clear();
+		    way.push_back(x);			
+		    way.push_back(y); 
 
-	//calculate waypoint if left lane
-	else
-	{
-	    cout<<"only left lane visible\n";
+		    //grad = atan(grad);
+		    // grad = grad < 0 ? PI + grad : grad;
+		    // grad = grad < 0 ? grad + 3.14/12 : grad - 3.14/12;
+		    way.push_back(grad);
+		    return way;
+		}
 
-	    float y = 100, x;
-	    float grad = heading(img, a, lam1);//	lam1/((range - offset)*2*PPM);
+		//calculate waypoint if left lane
+		else
+		{
+		    cout<<"only left lane visible\n";
 
-	    double theta = atan(-(2*range*PPM)/lam1); //-PI/2 to PI/2 from +ive x axis of waypoint definition
+		    float y = 100, x;
+		    float grad = heading(img, a, lam1);//	lam1/((range - offset)*2*PPM);
 
-	    x = pow(range*PPM, 2)/lam1 + a + (wide/2)*cos(theta);
-	    //x = pow((y/PPM - offset)*PPM, 2)/lam1 + a + (wide/2);
-	    if (grad > PI/4 && grad < (3*PI)/4) {
-		y = range*PPM + (wide/2)*sin(theta);
-		//y = range*PPM;
-		//y = range*PPM;
-	    }
-	    // way.push_back(x);
-	    // way.push_back(y);
-	    way.clear();
-	    way.push_back(x);			
-	    way.push_back(y); 
+		    double theta = atan(-(2*range*PPM)/lam1); //-PI/2 to PI/2 from +ive x axis of waypoint definition
 
-	    // grad = atan(grad);
-	    // grad = grad < 0 ? PI + grad : grad;
-	    // grad = grad < 0 ? grad + 3.14/12 : grad - 3.14/12;
-	    way.push_back(grad);
-	    return way;
+		    x = pow(range*PPM, 2)/lam1 + a + (wide/2)*cos(theta);
+		    //x = pow((y/PPM - offset)*PPM, 2)/lam1 + a + (wide/2);
+		    if (grad > PI/4 && grad < (3*PI)/4) {
+			y = range*PPM + (wide/2)*sin(theta);
+			//y = range*PPM;
+			//y = range*PPM;
+		    }
+		    // way.push_back(x);
+		    // way.push_back(y);
+		    way.clear();
+		    way.push_back(x);			
+		    way.push_back(y); 
 
-	}
+		    // grad = atan(grad);
+		    // grad = grad < 0 ? PI + grad : grad;
+		    // grad = grad < 0 ? grad + 3.14/12 : grad - 3.14/12;
+		    way.push_back(grad);
+		    return way;
+
+		}
     }
 
     //two lanes
     else
     {
-	cout<<"both lane visible\n";
-	first_frame=false;
-	float temp = pow((range - offset)*PPM, 2)/lam1 + a;
-	float temp2 = pow((range - offset)*PPM, 2)/lam2 + a + w;
-	way.push_back(temp/2 + temp2/2);
-	way.push_back(range*PPM);
-	float grad1 = heading(img, a, lam1); //lam1/((range - offset)*2*PPM);
-	float grad2 = heading(img, a+w, lam2); //lam2/((range - offset)*2*PPM);
-	//grad1 = atan(grad1);
-	//grad2 = atan(grad2);
-	// grad1 = grad1 < 0 ? PI + grad1 : grad1;
-	// grad2 = grad2 < 0 ? PI + grad2 : grad2;
-	// grad1 = grad1 < 0 ? grad1 + 3.14/12 : grad1 - 3.14/12;
-	// grad2 = grad2 < 0 ? grad2 + 3.14/12 : grad2 - 3.14/12;
-	is_prev_single=false;
-	way.push_back((grad1 + grad2)/2);
-	int lane1_centroid_x=centroid(img,a,lam1).x, lane2_centroid_x=centroid(img,a+w,lam2).x;
-	if(lane1_centroid_x<lane2_centroid_x)
-	{
-	    left_prev_x=lane1_centroid_x;
-	    right_prev_x=lane2_centroid_x;
-	}
-	else
-	{
-	    left_prev_x=lane2_centroid_x;
-	    right_prev_x=lane1_centroid_x;		
-	}
-	return way;
+		cout<<"both lane visible\n";
+		first_frame=false;
+		float temp = pow((range - offset)*PPM, 2)/lam1 + a;
+		float temp2 = pow((range - offset)*PPM, 2)/lam2 + a + w;
+		way.push_back(temp/2 + temp2/2);
+		way.push_back(range*PPM);
+		float grad1 = heading(img, a, lam1); //lam1/((range - offset)*2*PPM);
+		float grad2 = heading(img, a+w, lam2); //lam2/((range - offset)*2*PPM);
+		//grad1 = atan(grad1);
+		//grad2 = atan(grad2);
+		// grad1 = grad1 < 0 ? PI + grad1 : grad1;
+		// grad2 = grad2 < 0 ? PI + grad2 : grad2;
+		// grad1 = grad1 < 0 ? grad1 + 3.14/12 : grad1 - 3.14/12;
+		// grad2 = grad2 < 0 ? grad2 + 3.14/12 : grad2 - 3.14/12;
+		is_prev_single=false;
+		way.push_back((grad1 + grad2)/2);
+		int lane1_centroid_x=centroid(img,a,lam1).x, lane2_centroid_x=centroid(img,a+w,lam2).x;
+		if(lane1_centroid_x<lane2_centroid_x)
+		{
+		    left_prev_x=lane1_centroid_x;
+		    right_prev_x=lane2_centroid_x;
+		}
+		else
+		{
+		    left_prev_x=lane2_centroid_x;
+		    right_prev_x=lane1_centroid_x;		
+		}
+		return way;
     }
 }
 
@@ -1241,7 +1236,8 @@ void Lanes::parabola()
 	circle(top_view_rgb, Point(P[p2_g].x, top_view.rows - P[p2_g].y),10,Scalar(0,0,255),-1,8,0);
 	circle(top_view_rgb, Point(P[p3_g].x, top_view.rows - P[p3_g].y),10,Scalar(0,0,255),-1,8,0);
 	circle(top_view_rgb, Point(P[p4_g].x, top_view.rows - P[p4_g].y),10,Scalar(0,0,255),-1,8,0);
-	way = gen_way(top_view_rgb, a_gl, lam_gl, lam2_gl, w_gl);
+	way = gen_way(top_view_rgb, mario, a_gl, lam_gl, lam2_gl, w_gl);
+	is_prev_single_left=is_lane_left;
 
     }
 	// way.push_back(0.1);
@@ -1293,7 +1289,7 @@ void Lanes::parabola()
 
 	circle(top_view_rgb, Point(way[0], dot.rows - way[1]),10,Scalar(255, 0, 0),-1,8,0);
 	circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
-
+	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
 	imshow("top view rgb with dot showing waypoint", top_view_rgb);
 	waitKey(2);
 	if (SHOW) {
@@ -1747,6 +1743,7 @@ Mat checkPothole(Mat i)
 	}
 
 	if (SHOW) {
+		;
 	    // imshow("POT",out_pot);
 	    // waitKey(1);
 	}
