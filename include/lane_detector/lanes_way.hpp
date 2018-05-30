@@ -30,14 +30,14 @@
 
 #define W 400
 #define SUBSTRACTION_CONSTANT 30
-#define INTENSITY_TH 180
+#define INTENSITY_TH 160
 #define PI 3.14159265
 
-#define TH_REM_GRASS 210
-#define TH_DOT 180
-#define TH_SMALL_SUPERPIXEL 5
+#define TH_REM_GRASS 180
+#define TH_DOT 210 //130
+#define TH_SMALL_SUPERPIXEL 25
 #define TH_MIN_WHITE_REGION 0.5
-#define NUM_ITER 2000
+#define NUM_ITER 1000
 #define PPM 133.33
 #define DIST_CHECK 133
 #define KERNEL_SIZE 200
@@ -48,8 +48,8 @@
 #define MIN_INLIER_DIST_THRESH 1500
 #define JUMP_OF_WAYPOINT 15
 #define extrapolation_factor 5
-#define frames_to_skip_when_obstacle_detected 10
-#define degree_for_horizontal 20
+#define frames_to_skip_when_obstacle_detected 5
+#define degree_for_horizontal 40
 
 #define THRESHOLD_FOR_ANY_LANE 30
 #define LANE_THRESHOLD 30
@@ -117,6 +117,7 @@ bool no_lane;
 int dil_ko_churaya = 0;
 int obstacle_detected = 0;
 
+
 struct quadratic
 {
 	double a,b,c;
@@ -147,6 +148,7 @@ class Lanes
 
 public:
 	Mat top_view_rgb;
+	Mat linesd;
 	Lanes(Mat);
   	void joiner_of_white_spaces_in_obstacles(Mat img);
 	void remove_obstacles();

@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
-	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 1);
+	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("/lane", 1);
 	
 	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 10);
 	image_transport::ImageTransport it_(nh_);
@@ -67,7 +67,10 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 
 Lanes::Lanes(Mat img)
 {
-	imshow("img", img);
+	if (SHOW) {
+	    imshow("img", img);
+	    waitkey(2);
+	}
 	resize(img, img, Size(960, 600));
 	// imshow("img", img);
 	// cout<<img.rows<<' '<<img.cols<<endl;
@@ -76,6 +79,8 @@ Lanes::Lanes(Mat img)
 	cvtColor(this->img, this->img_gray,CV_BGR2GRAY);
 	this->flag_width = 0;
 	this->width_lanes = 400;
+	linesd = img_gray.clone();
+	linesd = Scalar(0);
 }
 
 int Lanes::IsValid(Mat A,int x,int y)
@@ -128,7 +133,9 @@ void Lanes::preprocess_indu()
 		}
 	}
 
-	imshow("mid", pre);
+	if (SHOW) {
+	    imshow("mid", pre);
+	}
 	// medianBlur(pre, pre, 7);
  //    erode(pre, pre, Mat(), Point(-1,-1),3);
  //    medianBlur(pre, pre, 7);
@@ -154,9 +161,11 @@ void Lanes::preprocess_indu()
     // waitKey(3);
 	top_view=img_gray.clone();
 	top_view_rgb = img.clone();	
-	imshow("orig", top_view_rgb);
-	imshow("result", top_view);
-	waitKey(3);
+	if (SHOW) {
+	    imshow("orig", top_view_rgb);
+	    imshow("result", top_view);
+	    waitKey(3);
+	}
 
 }
 
@@ -165,6 +174,9 @@ void Lanes::preprocess_lab()
 	Mat frame = img.clone();
 	Mat channels[3];
 	split(frame,channels);
+	if (SHOW) {
+	    imshow("l", channels[0]);
+	}
 	//:	imshow("2B-G",2*channels[0] - channels[1]);
 	Mat lab_,labu[3];
 	cvtColor(frame,lab_,CV_BGR2Lab);
@@ -178,7 +190,7 @@ void Lanes::preprocess_lab()
 	// imshow("LAB_check",lab_);
 	// waitKey(0);
 	Mat lab;
-	inRange (lab_,Scalar(220,100,100),Scalar(255,140,140),lab);   
+	inRange (lab_,Scalar(200,90,90),Scalar(255,140,140),lab);   
 	medianBlur (lab,lab, 7 );
 	int tem = 5;
 	while(tem--)
@@ -189,9 +201,11 @@ void Lanes::preprocess_lab()
 	img_gray = 	lab;
 	top_view = img_gray.clone();
 	top_view_rgb = img.clone();	
-	imshow("orig", top_view_rgb);
-	imshow("result", top_view);
-	waitKey(3);
+	if (SHOW) {
+	    imshow("orig", top_view_rgb);
+	    imshow("result", top_view);
+	    waitKey(3);
+	}
 
 }
 
@@ -208,9 +222,13 @@ void Lanes::preprocess_old()
 	erode(img, img, element);	
 	top_view = img_gray.clone();
 	top_view_rgb = img.clone();
-	// imshow("orig", top_view_rgb);
-	// imshow("result", top_view);
-	// waitKey(3);
+
+	if (SHOW) {
+	    ;
+	    //imshow("orig", top_view_rgb);
+	    //imshow("result", top_view);
+	    //waitKey(3);
+	}
 
 }
 
@@ -256,8 +274,11 @@ void Lanes::Intensity_adjust()  // the top part of frame may have some intensity
 
 void Lanes::remove_grass()
 {
-	// imshow("cv2", img);
-	// waitKey(0);
+	if (SHOW) {
+	    ;
+	    // imshow("cv2", img);
+	    // waitKey(0);
+	}
 	equalizeHist(img_gray, img_gray);
 	Mat non_grass = img.clone();
 	for(int i = 0; i < img.rows; i++)
@@ -285,8 +306,11 @@ void Lanes::remove_grass()
 			}
 		}
 	img = non_grass;
-	// imshow("remove_grass", non_grass);
-	// waitKey(3);
+	if (SHOW) {
+	    ;
+	    // imshow("remove_grass", non_grass);
+	    // waitKey(3);
+	}
 }
 
 
@@ -298,8 +322,11 @@ void Lanes::topview()
 	warpPerspective(top_view, top_view, h, Size(960,600));
 	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960,600));
 
-	// imshow("preprocess", top_view);
-	// waitKey(10);
+	if (SHOW) {
+	    ;
+	    // imshow("preprocess", top_view);
+	    // waitKey(10);
+	}
 
 }
 
@@ -427,12 +454,34 @@ bool is_bottom_at_left (Mat img, float a) {
 
 bool is_lane_horizontal (Mat img, float a, float lam) {
 
-    int thold = 200;
-    double y_left = sqrt(fabs(lam*a));
-    double y_right = sqrt(fabs(lam*(img.cols-a)));
-    cout << "fabs(y_left - y_right) " << fabs(y_left-y_right) << endl;
-    if (fabs(y_left - y_right) < thold && y_left >= 0 && y_right >= 0 && y_left < img.rows && y_right < img.rows) return true;
-    return false;
+	
+	//detecting horizontal lanes
+	vector<Vec4i> lines;
+	HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
+
+	int index = 0;
+	double maxLenTemp = 0, maxLen = 0;
+
+	if (lines.size())
+	{
+
+	    for (int i = 0; i < lines.size();i++)
+	    {
+			double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
+			if (maxLenTemp > maxLen)
+			{
+			    index = i;
+			    maxLen = maxLenTemp;
+			}
+	    }
+
+	    double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
+	    if (fabs(angle) < degree_for_horizontal*PI/180)
+	    {
+			return true;
+	    }
+	    return false;
+
 }
 
 vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
@@ -482,8 +531,50 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	}
 	
 	//if lane is horizontal
-	if (is_lane_horizontal(img, a, lam1)) {
+	if (is_lane_horizontal(img, a, lam1) && is_prev_single) {
 
+	    //detecting horizontal lanes
+	    vector<Vec4i> lines;
+	    HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
+
+	    int index = 0;
+	    double maxLenTemp = 0, maxLen = 0;
+
+	    if (lines.size())
+	    {
+
+		for (int i = 0; i < lines.size();i++)
+		{
+			    double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
+			    if (maxLenTemp > maxLen)
+			    {
+				index = i;
+				maxLen = maxLenTemp;
+			    }
+		}
+
+		double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
+		if (fabs(angle) < degree_for_horizontal*PI/180)
+		{
+			    cout << "hough angle " << (fabs(angle)*180)/PI << endl;
+			    cout << "HORIZONTAL LINE DETECTED\n";
+			    line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
+			    way.clear();
+			    if (is_prev_single_left) {
+				way.push_back(3*mario.cols/4);
+				way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+				way.push_back(0);
+			    }
+			    else {
+				way.push_back(mario.cols/4);
+				way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+				way.push_back(PI);
+			    }
+			    is_lane_left = is_prev_single_left;
+		}
+	    }
+
+	    /*
 	    if (is_lane_left) {
 		way.push_back(img.cols);
 		way.push_back(sqrt(fabs(lam1*(img.cols-a))) - wide/2);
@@ -494,6 +585,8 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 		way.push_back(sqrt(fabs(lam1*a))-wide/2);
 		way.push_back(heading(img, a, lam1));
 	    }
+	    */
+
 	}
 
 	is_prev_single=true;
@@ -502,7 +595,7 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 	//calculate waypoint if right lane
 
 
-	if(!is_lane_left) 
+	else if(!is_lane_left) 
 	{
 	    cout << "only right lane visible\n";
 
@@ -602,9 +695,12 @@ vector<double> gen_way(Mat img, float a, float lam1, float lam2, float w)
 
 void Lanes::parabola()
 {
+    if (SHOW) {
+	;
 	// imshow("normal_top_view_grey", top_view);
 	// imshow("top_view_rgb", top_view_rgb);
 	// waitKey(5);
+    }
 	// cvtColor(top_view_rgb, top_view, CV_BGR2GRAY);
 	Mat temp(top_view.rows, top_view.cols, CV_8UC3, Scalar(0,0,0));
 	Mat mario(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));
@@ -619,8 +715,10 @@ void Lanes::parabola()
                                        Point(1,1 ));
     dilate(temp, temp, element);
 
+    if (SHOW) {
 	imshow("temp", temp);
 	waitKey(5);
+    }
     int w = temp.rows, h = temp.cols;
     int nr_superpixels = 600;
     int nc = 100;
@@ -636,9 +734,12 @@ void Lanes::parabola()
 	resize(temp,temp,Size(temp.cols/2,temp.rows/2));
 
 	cvtColor(temp, temp, CV_BGR2BGRA);
-	// imshow("image original in top view", temp);
+	if (SHOW) {
+	    // imshow("image original in top view", temp);
+	    // waitKey(1);
+
+	}
 	// cudaFree();
-	// waitKey(1);
 	FastImgSeg segmenter;
 	segmenter.initializeFastSeg(temp.cols, temp.rows, nr_superpixels);
 	segmenter.LoadImg(temp.data);
@@ -646,15 +747,20 @@ void Lanes::parabola()
 	segmenter.Tool_GetMarkedImg();
 	Mat marked(temp.rows, temp.cols, CV_8UC4, segmenter.markedImg);
 	Mat mask(temp.rows, temp.cols, CV_32SC1, segmenter.segMask);
-	imshow("img super pixel cluster marked for threshold settings", marked);
-	waitKey(5);
+	if (SHOW) {
+	    imshow("img super pixel cluster marked for threshold settings", marked);
+	    waitKey(2);
+	}
 	// end = clock();
 	// cout<<"segmented\n";
 	// segmenter.~FastImgSeg();
 
 	// Mat slic_img = temp.clone();//cvarrToMat(image);
-    // imshow("image", img);
-    // waitKey(10);
+	if (SHOW) {
+	    ;
+	    // imshow("image", img);
+	    // waitKey(10);
+	}
 
 	int max = 0;
 	for(int i = 0; i < mask.rows; i++)
@@ -739,12 +845,14 @@ void Lanes::parabola()
     }
 
 
-    imshow("mario", mario);
 	cout<<"P size = "<<P.size()<<endl;
 	// for(int i = 0; i < P.size(); i++)
 	// 	cout<<P[i].x<<' '<<P[i].y<<endl;
-	imshow("dotted_condom", dot);
-	waitKey(5);
+	if (SHOW) {
+	    imshow("mario", mario);
+	    imshow("dotted_condom", dot);
+	    waitKey(2);
+	}
 	int flag_no_lane = 0;
 
 	vector<double> way;
@@ -765,7 +873,11 @@ void Lanes::parabola()
 	    way.push_back(PI/2);
 	    flag_no_lane = 1;
 	}
-	// imshow("undotted", slic_img);
+	if (SHOW) {
+	    ;
+	    // imshow("undotted", slic_img);
+	    // waitKey(1);
+	}
 	
 	int p1_g, p2_g, p3_g, p4_g;
 	int score_gl = 0;/* comm_count_gl = 0;*/
@@ -1118,9 +1230,12 @@ void Lanes::parabola()
 
 
 
-	// imshow("top_view_rgb", top_view_rgb);
-	// imshow("sampled_points", dot);
-	// waitKey(2);
+	if (SHOW) {
+	    ;
+	    // imshow("top_view_rgb", top_view_rgb);
+	    // imshow("sampled_points", dot);
+	    // waitKey(2);
+	}
     if (!flag_no_lane) {
 	circle(top_view_rgb, Point(P[p1_g].x, top_view.rows - P[p1_g].y),10,Scalar(0,0,255),-1,8,0);
 	circle(top_view_rgb, Point(P[p2_g].x, top_view.rows - P[p2_g].y),10,Scalar(0,0,255),-1,8,0);
@@ -1144,82 +1259,12 @@ void Lanes::parabola()
 	    obstacle_detected = -1*frames_to_skip_when_obstacle_detected;
 	}
 
-	/*
-
-	//detecting horizontal lanes
-	Mat linesd(mario.rows, mario.cols, CV_8UC1, Scalar(0));
-	vector<Vec4i> lines;
-	HoughLinesP(mario, lines,1, CV_PI/180, 80, 30, 10);
-
-	for (int i = 0; i < lines.size(); i++) {
-	double angle = atan(lines[i][1] - lines[i][3])/(lines[i][0] - lines[i][2]);
-	if (fabs(angle) < degree_for_horizontal*PI/180) {
-        line(linesd, Point(lines[i][0],lines[i][1]), Point(lines[i][2],lines[i][3]) , Scalar(255), 1, 8, 0);
-	    way.clear();
-	    if (is_prev_single_left) {
-		way.push_back(3*mario.cols/4);
-		way.push_back(mario.rows - (lines[i][1] + mario.rows)/2);
-		way.push_back(0);
-		break;
-	    }
-	    else {
-		way.push_back(mario.cols/4);
-		way.push_back(mario.rows - (lines[i][1] + mario.rows)/2);
-		way.push_back(PI);
-		break;
-	    }
+	//showing horizontal lanes
+	if (SHOW) {
+	    imshow("lines", linesd);
+	    waitKey(2);
 	}
-	}
-	imshow("lines", linesd);
-	waitKey(2);
-	*/
 
-	
-	//detecting horizontal lanes
-	Mat linesd(mario.rows, mario.cols, CV_8UC1, Scalar(0));
-	vector<Vec4i> lines;
-	HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
-
-	int index = 0;
-	double maxLenTemp = 0, maxLen = 0;
-
-	if (lines.size())
-	{
-
-	    for (int i = 0; i < lines.size();i++)
-	    {
-			double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
-			if (maxLenTemp > maxLen)
-			{
-			    index = i;
-			    maxLen = maxLenTemp;
-			}
-	    }
-
-	    double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
-	    if (fabs(angle) < degree_for_horizontal*PI/180)
-	    {
-			cout << "hough angle " << (fabs(angle)*180)/PI << endl;
-			cout << "HORIZONTAL LINE DETECTED\n";
-			line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
-			way.clear();
-			if (is_prev_single_left) {
-			    way.push_back(3*mario.cols/4);
-			    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-			    way.push_back(0);
-			}
-			else {
-			    way.push_back(mario.cols/4);
-			    way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-			    way.push_back(PI);
-			}
-	    }
-	}
-	imshow("lines", linesd);
-	waitKey(2);
-
-
-	
 
     /*
     if (obstacle_detected > 0) {
@@ -1250,8 +1295,11 @@ void Lanes::parabola()
 	circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
 
 	imshow("top view rgb with dot showing waypoint", top_view_rgb);
-	imshow("top view grey for laser scan", new_dot);
 	waitKey(2);
+	if (SHOW) {
+	    imshow("top view grey for laser scan", new_dot);
+	    waitKey(2);
+	}
 
 	// geometry_msgs::PoseStamped waypoint;
 	waypoint.pose.position.x = way[1]/PPM /*+ transform.getOrigin().x()*/;
@@ -1281,7 +1329,7 @@ void Lanes::parabola()
 	waypoint.header.frame_id = "base_link";
 	ros::NodeHandle nh_;
 
-	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal/", 10);
+	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("/lane", 10);
 	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 1);
 
 	LaserScan scan = imageConvert(mario_pub);
@@ -1289,18 +1337,24 @@ void Lanes::parabola()
 
 	++obstacle_detected;
 	
-	if(counter % 15 == 0 && obstacle_detected >= 0)
+	if(counter % 5 == 0 && obstacle_detected >= 0)
 	{
 		waypoint_pub.publish(waypoint);
 		cout<<"Published\n";
 	}
-	// imshow("Result showing dot image", dot);
-	// imshow("Res2", top_view_rgb);
-	// waitKey(10);
+
+	if (SHOW) {
+	    ;
+	    // imshow("Result showing dot image", dot);
+	    // imshow("Res2", top_view_rgb);
+	    // waitKey(1);
+	}
+
 	waypoint_prev.clear();
 	waypoint_prev.push_back(way[0]);
 	waypoint_prev.push_back(way[1]);
 	waypoint_prev.push_back(way[2]);
+
 
 }
 
@@ -1484,7 +1538,11 @@ void Lanes::remove_obstacles() {
 
         medianBlur(bright_obs, bright_obs, 9);
 
-        //imshow("bright_obs", bright_obs);
+	if (SHOW) {
+	    ;
+	    //imshow("bright_obs", bright_obs);
+	    //waitKey(1);
+	}
 
         /*  for white obstacles */
         cvtColor(img, white_obs, CV_BGR2HLS);
@@ -1552,8 +1610,10 @@ void Lanes::remove_obstacles() {
         }
         */
 
-        //imshow("removed obstacle",img);
-        //waitKey(10);
+	if (SHOW) {
+	    //imshow("removed obstacle",img);
+	    //waitKey(1);
+	}
 }
 
 /*
@@ -1686,7 +1746,9 @@ Mat checkPothole(Mat i)
 		}
 	}
 
-	// imshow("POT",out_pot);
-	// waitKey(1);
+	if (SHOW) {
+	    // imshow("POT",out_pot);
+	    // waitKey(1);
+	}
 	return out_pot;
 }
