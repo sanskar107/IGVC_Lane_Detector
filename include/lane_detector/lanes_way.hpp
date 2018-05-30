@@ -34,10 +34,10 @@
 #define INTENSITY_TH 160
 #define PI 3.14159265
 
-#define TH_REM_GRASS 180
-#define TH_DOT 210 //130
+#define TH_REM_GRASS 160
+#define TH_DOT 160 //130
 #define TH_SMALL_SUPERPIXEL 25
-#define TH_MIN_WHITE_REGION 0.5
+#define TH_MIN_WHITE_REGION 0.3
 #define NUM_ITER 1000
 #define PPM 133.33
 #define DIST_CHECK 133
@@ -49,8 +49,8 @@
 #define MIN_INLIER_DIST_THRESH 1500
 #define JUMP_OF_WAYPOINT 15
 #define extrapolation_factor 5
-#define frames_to_skip_when_obstacle_detected 5
-#define degree_for_horizontal 40
+#define frames_to_skip_when_obstacle_detected 2
+#define degree_for_horizontal 50
 
 #define THRESHOLD_FOR_ANY_LANE 30
 #define LANE_THRESHOLD 30
@@ -61,7 +61,7 @@ struct svm_node *x_space;
 struct svm_problem prob;
 struct svm_parameter param;
 
-int wide = 500;
+int wide = 350;
 int no_of_random_points_for_dot = 200;
 int dist_for_inlier = 10;
 

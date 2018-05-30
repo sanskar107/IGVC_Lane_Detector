@@ -203,7 +203,6 @@ void Lanes::preprocess_lab()
 	top_view_rgb = img.clone();	
 	if (SHOW) {
 	    imshow("orig", top_view_rgb);
-	    imshow("result", top_view);
 	    waitKey(3);
 	}
 
@@ -843,8 +842,8 @@ void Lanes::parabola()
 	cout<<"P size = "<<P.size()<<endl;
 	// for(int i = 0; i < P.size(); i++)
 	// 	cout<<P[i].x<<' '<<P[i].y<<endl;
-	if (SHOW) {
 	    imshow("mario", mario);
+	if (SHOW) {
 	    imshow("dotted_condom", dot);
 	    waitKey(2);
 	}
@@ -1255,10 +1254,11 @@ void Lanes::parabola()
 	    obstacle_detected = -1*frames_to_skip_when_obstacle_detected;
 	}
 
+    	imshow("lines", linesd);
+	waitKey(2);
 	//showing horizontal lanes
 	if (SHOW) {
-	    imshow("lines", linesd);
-	    waitKey(2);
+	;
 	}
 
 
@@ -1277,11 +1277,11 @@ void Lanes::parabola()
 	}
 
 	if ((fabs(way[0] - waypoint_prev[0]) > JUMP_OF_WAYPOINT) && !flag_no_lane) {
-	    way[0] = 0.5*waypoint_prev[0] + 0.5*way[0];
+	    way[0] = 0.85*waypoint_prev[0] + 0.15*way[0];
 	}
 
 	if (fabs(way[1] - waypoint_prev[1]) > JUMP_OF_WAYPOINT && !flag_no_lane) {
-	    way[1] = 0.5*waypoint_prev[1] + 0.5*way[1];
+	    way[1] = 0.85*waypoint_prev[1] + 0.15*way[1];
 	}
 
 	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
@@ -1291,11 +1291,8 @@ void Lanes::parabola()
 	circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
 	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
 	imshow("top view rgb with dot showing waypoint", top_view_rgb);
+    	imshow("top view grey for laser scan", new_dot);
 	waitKey(2);
-	if (SHOW) {
-	    imshow("top view grey for laser scan", new_dot);
-	    waitKey(2);
-	}
 
 	// geometry_msgs::PoseStamped waypoint;
 	waypoint.pose.position.x = way[1]/PPM /*+ transform.getOrigin().x()*/;
@@ -1333,7 +1330,7 @@ void Lanes::parabola()
 
 	++obstacle_detected;
 	
-	if(counter % 5 == 0 && obstacle_detected >= 0)
+	if(counter % 3 == 0 && obstacle_detected >= 0)
 	{
 		waypoint_pub.publish(waypoint);
 		cout<<"Published\n";
@@ -1346,10 +1343,12 @@ void Lanes::parabola()
 	    // waitKey(1);
 	}
 
-	waypoint_prev.clear();
-	waypoint_prev.push_back(way[0]);
-	waypoint_prev.push_back(way[1]);
-	waypoint_prev.push_back(way[2]);
+	if (!flag_no_lane) {
+		waypoint_prev.clear();
+		waypoint_prev.push_back(way[0]);
+		waypoint_prev.push_back(way[1]);
+		waypoint_prev.push_back(way[2]);
+	}
 
 
 }
