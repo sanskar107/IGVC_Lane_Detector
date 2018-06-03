@@ -3,7 +3,7 @@
 int main(int argc, char** argv)
 {
 
-	cout<<"running_wwe_latest"<<endl;
+	cout<<"running_wwe_lat"<<endl;
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
@@ -190,7 +190,7 @@ void Lanes::preprocess_lab()
 	// imshow("LAB_check",lab_);
 	// waitKey(0);
 	Mat lab;
-	inRange (lab_,Scalar(200,90,90),Scalar(255,140,140),lab);   
+	inRange (lab_,Scalar(220,100,100),Scalar(255,140,140),lab);   
 	medianBlur (lab,lab, 7 );
 	int tem = 5;
 	while(tem--)
@@ -219,6 +219,9 @@ void Lanes::preprocess_old()
 
 	erode(img_gray, img_gray, element);
 	erode(img, img, element);	
+	// erode(img, img, element);	
+	// erode(img, img, element);	
+
 	top_view = img_gray.clone();
 	top_view_rgb = img.clone();
 
@@ -316,10 +319,13 @@ void Lanes::remove_grass()
 void Lanes::topview()
 {
 	// Mat h = (Mat_<float>(3, 3)<< 3.665649454142774, 5.249642779023947, -2017.634107745852, 0.1725239771632309, 10.74704553239514, -3191.00361122947, 7.864729235797308e-05, 0.006494804637725546, 1);
-	Mat h = (Mat_<float>(3, 3)<<0.9524258265572764, 1.932259226972684, 71.36069918907818, 0.08413921815847476, 3.18697351467409, -77.56300977045593, -2.409361384497643e-05, 0.00403298641581695, 1);
+	// Mat h = (Mat_<float>(3, 3)<<0.9524258265572764, 1.932259226972684, 71.36069918907818, 0.08413921815847476, 3.18697351467409, -77.56300977045593, -2.409361384497643e-05, 0.00403298641581695, 1);
+	Mat h = (Mat_<float>(3, 3)<< 1.133010743122091, 1.812543919278261, -19.05065177174687, 0.1793289685643628, 3.223177492850926, -128.309815365586, 0.0001402310816308133, 0.003869563899539036, 1);
 
 	warpPerspective(top_view, top_view, h, Size(960,600));
 	warpPerspective(top_view_rgb, top_view_rgb, h, Size(960,600));
+	// imshow("t__v", top_view);
+	// imshow("rgb", top_view_rgb);
 
 	if (SHOW) {
 	    ;
@@ -452,7 +458,6 @@ bool is_bottom_at_left (Mat img, float a) {
 }
 
 bool is_lane_horizontal (Mat img, float a, float lam) {
-
 	
 	//detecting horizontal lanes
 	vector<Vec4i> lines;
@@ -461,27 +466,36 @@ bool is_lane_horizontal (Mat img, float a, float lam) {
 	int index = 0;
 	double maxLenTemp = 0, maxLen = 0;
 
-	if (lines.size())
+	try
 	{
+		if (lines.size())
+		{
+			// cout<<"size = "<<lines.size()<<endl;
 
-	    for (int i = 0; i < lines.size();i++)
-	    {
-			double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
-			if (maxLenTemp > maxLen)
-			{
-			    index = i;
-			    maxLen = maxLenTemp;
-			}
-	    }
+		    for (int i = 0; i < lines.size();i++)
+		    {
+		    	cout<<i<<' ';
+				maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
+				if (maxLenTemp > maxLen)
+				{
+				    index = i;
+				    maxLen = maxLenTemp;
+				}
+		    }
+		    double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
+		    if (fabs(angle) < degree_for_horizontal*PI/180)
+		    {
+				return true;
+		    }
+		    return false;
 
-	    double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
-	    if (fabs(angle) < degree_for_horizontal*PI/180)
-	    {
-			return true;
-	    }
-	    return false;
-
+		}
 	}
+	catch(Exception &e)
+	{
+		return false;
+	}
+	return false;
 }
 
 vector<double> Lanes::gen_way(Mat img, Mat mario, float a, float lam1, float lam2, float w)
@@ -707,6 +721,8 @@ void Lanes::parabola()
 	Mat element = getStructuringElement(MORPH_RECT,
                                        Size( 2*1 + 1, 2*1+1 ),
                                        Point(1,1 ));
+    erode(temp, temp, element);
+
     dilate(temp, temp, element);
 
     if (SHOW) {
@@ -952,14 +968,14 @@ void Lanes::parabola()
 
 
 			float dist_lx = fabs((P[p].y*P[p].y)/lam + a - P[p].x);
-			float dist_ly = fabs(sqrt(lam*(P[p].x-a)) - P[p].y);
+			float dist_ly = lam*(P[p].x-a) < 0 ? INT_MAX : fabs(sqrt(fabs(lam*(P[p].x-a))) - P[p].y);
 			if(dist_lx < dist_for_inlier || dist_ly < dist_for_inlier)
 			{
 			    flag = 1;
 			    flag_l = 1;
 			}
 			float dist_rx = fabs((P[p].y*P[p].y)/lam2 + a + w - P[p].x);
-			float dist_ry = fabs(sqrt(lam2*(P[p].x-a-w)) - P[p].y);
+			float dist_ry = lam2*(P[p].x-a-w) < 0 ? INT_MAX : fabs(sqrt(fabs(lam2*(P[p].x-a-w))) - P[p].y);
 			//float dist_r = sqrt(pow(x - P[p].x, 2) + pow(y_r - P[p].y, 2));
 			if(dist_rx < dist_for_inlier || dist_ry < dist_for_inlier)
 			{
@@ -1213,8 +1229,8 @@ void Lanes::parabola()
 
 	for(int x = 0; x < top_view.cols; x++)
 	{
-	    int y_l = sqrt(lam_gl*(x - a_gl));
-	    int y_r = sqrt(lam2_gl*(x - a_gl - w_gl));
+	    int y_l = lam_gl*(x - a_gl) < 0 ? -100 : sqrt(fabs(lam_gl*(x - a_gl)));
+	    int y_r = lam2_gl*(x - a_gl - w_gl) < 0 ? -100 : sqrt(fabs(lam2_gl*(x - a_gl - w_gl)));
 
 	    circle(dot, Point(x, top_view_rgb.rows - y_l),3,Scalar(255),-1,8,0); // dot is a single channel image
 	    circle(dot, Point(x, top_view_rgb.rows - y_r),3,Scalar(255),-1,8,0);
@@ -1277,11 +1293,11 @@ void Lanes::parabola()
 	}
 
 	if ((fabs(way[0] - waypoint_prev[0]) > JUMP_OF_WAYPOINT) && !flag_no_lane) {
-	    way[0] = 0.85*waypoint_prev[0] + 0.15*way[0];
+	    way[0] = 0.5*waypoint_prev[0] + 0.5*way[0];
 	}
 
 	if (fabs(way[1] - waypoint_prev[1]) > JUMP_OF_WAYPOINT && !flag_no_lane) {
-	    way[1] = 0.85*waypoint_prev[1] + 0.15*way[1];
+	    way[1] = 0.5*waypoint_prev[1] + 0.5*way[1];
 	}
 
 	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
@@ -1381,24 +1397,24 @@ bool IsAllowed(float lam1,float a,float lam2,float w,int rows,int cols)
     else if(abs(w)<100)return 0;	//w is very small
     else
     {
-	if(fabs(lam1)>500||fabs(lam2)>500)	//Non horizontal lines
-	{
-	    for(int i=0;i<rows;i++)
-	    {
-		int x1=((i*i)/lam1)+a;
-		int x2=((i*i)/lam2)+a+w;
-		if(abs(x1-x2)<100)return 0;
-	    }
-	}
-	else
-	{
-	    for(int i=0;i<cols;i++)
-	    {
-		int y1=sqrt(lam1*(i-a));
-		int y2=sqrt(lam2*(i-a-w));
-		if(abs(y1-y2)<100)return 0;
-	    }
-	}
+		if(fabs(lam1)>500||fabs(lam2)>500)	//Non horizontal lines
+		{
+		    for(int i=0;i<rows;i++)
+		    {
+			int x1=((i*i)/lam1)+a;
+			int x2=((i*i)/lam2)+a+w;
+			if(abs(x1-x2)<100)return 0;
+		    }
+		}
+		else
+		{
+		    for(int i=0;i<cols;i++)
+		    {
+				int y1 = lam1*(i-a) < 0 ? -100 : sqrt(fabs(lam1*(i-a)));
+				int y2 = lam2*(i-a-w) < 0 ? 100 : sqrt(fabs(lam2*(i-a-w)));
+				if(abs(y1-y2)<100) return 0;
+		    }
+		}
     }
     return 1;
 }
@@ -1418,7 +1434,7 @@ sensor_msgs::LaserScan imageConvert(Mat image)
 	scan.scan_time=0.025;
 	scan.ranges.resize(1181);
 
-	int centre = image.cols/2 + .3*PPM;
+	int centre = image.cols/2;// + .3*PPM;
 	
 	for(int t=0;t<=1180;t++)
 	{
@@ -1438,12 +1454,12 @@ sensor_msgs::LaserScan imageConvert(Mat image)
 	    y=(float)((image.rows-i)+ 0*PPM)/PPM;
 	    
 	    if(y!=0)
-	      angle = (-1.0)*atan((1.0)*x/y);
+			angle = (-1.0)*atan((1.0)*x/y);
 	    else 
-	      { 
-	        if(x>0) angle=-1.57;
-	        else angle=(1.57);
-	      }
+		{ 
+			if(x>0) angle=-1.57;
+			else angle=(1.57);
+		}
 
 	    dist=sqrt(x*x+y*y);
 	    int index=(int)((angle-scan.angle_min)/scan.angle_increment);
@@ -1592,18 +1608,18 @@ void Lanes::remove_obstacles() {
         }
 
 
-        /*
-          bright white    
-        for (int i = 0; i < contours_w.size(); i++) {
-                box_w[i] =  boundingRect(contours_w[i]);
-                if (box_w[i].area() > 20000 && (box_w[i].br().y-box_w[i].tl().y) > (box_w[i].br().x-box_w[i].tl().x) &&  box_w[i].height <= 2.0*box_w[i].width) {
-//                                rectangle(img, box_w[i].tl(), box_w[i].br(), Scalar(0, 0, 0), 1, 8, 0);
-//                                printf("Area: %d \t Aspect ratio: %f\n", box_w[i].area(), (double)box_w[i].height/box_w[i].width);
-                        //drawContours(img, contours_w, i, Scalar(0, 0, 0), 50, 8, hierarchy_w);
-                        //drawContours(img, contours_w, i, Scalar(0, 0, 0), -1, 8, hierarchy_w);
-                }
+          // bright white    
+        for (int i = 0; i < contours_w.size(); i++)
+        {
+            box_w[i] =  boundingRect(contours_w[i]);
+            if (contourArea(contours_w[i]) > 20000 && (box_w[i].br().y-box_w[i].tl().y) > (box_w[i].br().x-box_w[i].tl().x) &&  box_w[i].height <= 2.0*box_w[i].width)
+            {
+				rectangle(img, box_w[i].tl(), box_w[i].br(), Scalar(0, 0, 0), 1, 8, 0);
+				// printf("Area: %d \t Aspect ratio: %f\n", box_w[i].area(), (double)box_w[i].height/box_w[i].width);
+                drawContours(img, contours_w, i, Scalar(0, 0, 0), 50, 8, hierarchy_w);
+                drawContours(img, contours_w, i, Scalar(0, 0, 0), -1, 8, hierarchy_w);
+            }
         }
-        */
 
 	if (SHOW) {
 	    //imshow("removed obstacle",img);

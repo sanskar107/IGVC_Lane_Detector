@@ -21,47 +21,42 @@
 #include <sensor_msgs/LaserScan.h>
 //#include "opencv2/cudaarithm.hpp"
 #include <tf/transform_datatypes.h>
-#include "svm.h"
 #include "../src/library/gSLIC/FastImgSeg.h"
 #include <tf/transform_listener.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-#define SHOW 1
+#define SHOW 0
 #define W 400
 #define SUBSTRACTION_CONSTANT 30
 #define INTENSITY_TH 160
 #define PI 3.14159265
 
-#define TH_REM_GRASS 160
-#define TH_DOT 160 //130
-#define TH_SMALL_SUPERPIXEL 25
-#define TH_MIN_WHITE_REGION 0.3
+#define TH_REM_GRASS 190
+#define TH_DOT 170 //130
+#define TH_SMALL_SUPERPIXEL 20
+#define TH_MIN_WHITE_REGION 0.5
 #define NUM_ITER 1000
-#define PPM 133.33
-#define DIST_CHECK 133
+#define PPM 150
+#define DIST_CHECK 300
 #define KERNEL_SIZE 200
-#define JUMP 500
+#define JUMP 300
 #define MIN_GAP_BETWEEN_OBSTACLE_AND_LANE 150 
 #define NAV_GAP 120
 #define LAMBDA_THRESHOLD_FOR_HORIZONTAL_LANE 1
 #define MIN_INLIER_DIST_THRESH 1500
 #define JUMP_OF_WAYPOINT 15
 #define extrapolation_factor 5
-#define frames_to_skip_when_obstacle_detected 2
-#define degree_for_horizontal 50
+#define frames_to_skip_when_obstacle_detected 4
+#define degree_for_horizontal 30
 
-#define THRESHOLD_FOR_ANY_LANE 30
-#define LANE_THRESHOLD 30
+#define THRESHOLD_FOR_ANY_LANE 70
+#define LANE_THRESHOLD 70
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
-struct svm_model* model;
-struct svm_node *x_space;
-struct svm_problem prob;
-struct svm_parameter param;
 
-int wide = 350;
+int wide = 400;
 int no_of_random_points_for_dot = 200;
 int dist_for_inlier = 10;
 

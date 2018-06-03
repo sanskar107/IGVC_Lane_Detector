@@ -68,20 +68,10 @@ cuda_add_library(gSLICr_lib
 target_link_libraries(gSLICr_lib ${CUDA_LIBRARY})
 
 add_executable(lanes src/lanes_way.cpp)
-# add_executable(lanes_sid src/lanes_chalne_wala_siddhant.cpp)
-
-add_library(svm include/lane_detector/svm.cpp)
 
 target_link_libraries(lanes
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
-  svm
   gSLICr_lib
 )
 
-# target_link_libraries(lanes_sid
-#   ${catkin_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-#   svm
-#   gSLICr_lib
-# )
