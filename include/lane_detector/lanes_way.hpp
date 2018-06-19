@@ -30,12 +30,18 @@
 #define SHOW 0
 #define W 400
 #define SUBSTRACTION_CONSTANT 30
-#define INTENSITY_TH 160
+#define INTENSITY_TH 140
 #define PI 3.14159265
 
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
 #define TH_REM_GRASS 190
 #define TH_DOT 170 //130
 #define TH_SMALL_SUPERPIXEL 20
+=======
+#define TH_REM_GRASS 140
+#define TH_DOT 150 //130
+#define TH_SMALL_SUPERPIXEL 10
+>>>>>>> Final Worked code
 #define TH_MIN_WHITE_REGION 0.5
 #define NUM_ITER 1000
 #define PPM 150
@@ -49,7 +55,11 @@
 #define JUMP_OF_WAYPOINT 15
 #define extrapolation_factor 5
 #define frames_to_skip_when_obstacle_detected 4
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
 #define degree_for_horizontal 30
+=======
+#define degree_for_horizontal 40
+>>>>>>> Final Worked code
 
 #define THRESHOLD_FOR_ANY_LANE 70
 #define LANE_THRESHOLD 70
@@ -84,7 +94,6 @@ vector<int> obstacle_coords (Mat img, vector<double> old_way);
 vector<double> gen_new_way(Mat top_view_rgb,double a_gl,double lam_gl,double lam2_gl,double w_gl, vector<double>);
 bool waypoint_on_obstacle(Mat img, vector<double>);
 bool is_lane_horizontal (Mat img, float a, float lam1);
-Mat checkPothole(Mat);
 MatrixXd homo(3,3);  
 sensor_msgs::LaserScan imageConvert(cv::Mat image);
 
@@ -136,8 +145,6 @@ class Lanes
 	int frameHeight;
 	quadratic left_fy,right_gy;
 	quadratic array_l[5],array_r[5];
-	double width_lanes;
-	int flag_width;
 	double gamma_,v,sigma;
 	double THRESH;
 

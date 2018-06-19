@@ -556,6 +556,8 @@ void Lanes::parabola()
 	// cvtColor(top_view_rgb, top_view, CV_BGR2GRAY);
 	Mat temp(top_view.rows, top_view.cols, CV_8UC3, Scalar(0,0,0));
 	Mat mario(top_view.rows, top_view.cols, CV_8UC1, Scalar(0));  
+	imshow("temp", temp);
+	waitKey(5);
 
 	for(int i = 0; i < top_view.rows; i++)
 		for(int j = 0; j < top_view.cols; j++)
@@ -568,8 +570,7 @@ void Lanes::parabola()
                                        Point(1,1 ));
     dilate(temp, temp, element);
 
-	imshow("temp", temp);
-	waitKey(5);
+
     int w = temp.rows, h = temp.cols;
     int nr_superpixels = 600;
     int nc = 100;

@@ -68,10 +68,17 @@ cuda_add_library(gSLICr_lib
 target_link_libraries(gSLICr_lib ${CUDA_LIBRARY})
 
 add_executable(lanes src/lanes_way.cpp)
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
+=======
+
+>>>>>>> Final Worked code
 
 target_link_libraries(lanes
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   gSLICr_lib
 )
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
 
+=======
+>>>>>>> Final Worked code

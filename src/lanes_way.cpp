@@ -3,7 +3,11 @@
 int main(int argc, char** argv)
 {
 
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
 	cout<<"running_wwe_lat"<<endl;
+=======
+	cout<<"starting"<<endl;
+>>>>>>> Final Worked code
 	ros::init(argc, argv, "image_converter");
 	ros::NodeHandle nh_;
 
@@ -48,6 +52,9 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	if(img.rows < 0) return;
 
 	Lanes L(img);
+	// L.Intensity_distribution();
+	L.Intensity_adjust();
+	// L.Intensity_distribution();
 
 	// L.Intensity_adjust();
 	// begin = clock();
@@ -62,6 +69,7 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	L.topview();
 	// begin = clock();
 	L.parabola();
+
 }
 
 
@@ -77,8 +85,6 @@ Lanes::Lanes(Mat img)
 	this->img = img;
 	// top_view_rgb=img.clone();
 	cvtColor(this->img, this->img_gray,CV_BGR2GRAY);
-	this->flag_width = 0;
-	this->width_lanes = 400;
 	linesd = img_gray.clone();
 	linesd = Scalar(0);
 }
@@ -249,7 +255,7 @@ void Lanes::Intensity_distribution()
 		dist.at<uchar>(256-sum,i) = 255;
 	}
 	imshow("Intensity_distribution",dist);
-	waitKey(0);
+	waitKey(3);
 }
 
 void Lanes::Intensity_adjust()  // the top part of frame may have some intensity variation
@@ -335,113 +341,6 @@ void Lanes::topview()
 
 }
 
-/*
-vector<double> gen_new_way(Mat img, double a, double lam1, double lam2, double w, vector<double> old_waypoint) {
-
-        double shift_x;
-        double shift_y;
-        double theta;
-        double multi = 1;
-
-        cout << "old.x : " << old_waypoint[0] << " old.y " << old_waypoint[1] << endl;
-        //temp contains vector<int> of obstacle detected in front view
-       	vector<int> obstacle = obstacle_coords(img, old_waypoint);
-
-        //lane check cicle
-        //circle(img, Point((float)((1.0*obstacle[1]*obstacle[1])/lam1 + a),img.rows- obstacle[1]),15 ,Scalar(255, 255, 0),-1,1,0);
-
-	vector<double> new_way;
-
-        Point check_point = Point(old_waypoint[0]+DIST_CHECK*cos(old_waypoint[2]), old_waypoint[1]+DIST_CHECK*sin(old_waypoint[2]));
-	if(no_lane)
-	{
-                for (int i = 0; i < 10; i++) cout << "NO LANE" << endl;
-		new_way.push_back(old_waypoint[0]+JUMP*cos(old_waypoint[2]));
-		new_way.push_back(old_waypoint[1]+JUMP*sin(old_waypoint[2]));
-
-                cout << "current y when no lane " << new_way[1];
-                multi = 0;
-
-	}
-	else
-	{
-		if(is_prev_single)
-		{
-
-			if(is_prev_single_left)
-			{
-                                for (int i = 0; i < 10; i++) cout << "LEFT LANE: dist " << fabs(obstacle[0] - ((obstacle[3]*obstacle[3])/lam1 + a)) << endl;
-                                //if (fabs(obstacle[0] - ((obstacle[1]*obstacle[1])/lam1 + a)) > MIN_GAP_BETWEEN_OBSTACLE_AND_LANE) {
-                                if (fabs(obstacle[0] - ((img.rows*img.rows)/(4*lam1) + a)) > MIN_GAP_BETWEEN_OBSTACLE_AND_LANE) {
-                                        multi = 0;
-
-                                        new_way.push_back((obstacle[0] + ((obstacle[1]*obstacle[1])/lam1 + a))/2);
-                                }
-                                else {
-                                        multi = 1;
-                                        new_way.push_back(obstacle[2]+NAV_GAP);
-                                }
-				new_way.push_back(old_waypoint[1]);
-                                cout << "current y when single left lane " << new_way[1];
-                                circle(img, Point(new_way[0], img.rows-new_way[1]),15 ,Scalar(150, 3, 15),-1,1,0);
-			}
-			else
-                        {       
-
-                                for (int i = 0; i < 10; i++) { cout << "RIGHT LANE: dist " << fabs(obstacle[2] - ((obstacle[3]*obstacle[3])/lam1 + a)) << endl;
-                                cout << "obstacle_right.x" << obstacle[2] << endl;
-                                cout << "lane_right.x" << ((obstacle[3]*obstacle[3])/lam1 + a) << endl;
-                                }
-                                //if (fabs(obstacle[2] - ((obstacle[3]*obstacle[3])/lam1 + a)) > MIN_GAP_BETWEEN_OBSTACLE_AND_LANE) {
-                                if (fabs(obstacle[2] - ((img.rows*img.rows)/(4*lam1) + a)) > MIN_GAP_BETWEEN_OBSTACLE_AND_LANE) {
-
-                                        cout << "entering from between" << endl;
-                                        cout << "entering from between" << endl;
-                                        cout << "entering from between" << endl;
-                                        cout << "entering from between" << endl;
-                                        cout << "entering from between" << endl;
-                                        multi = 0;
-                                                new_way.push_back((obstacle[2]+((obstacle[3]*obstacle[3])/lam1 + a))/2);
-                                                }
-
-                                else {
-                                        multi = -1;
-                                        new_way.push_back(obstacle[0]-NAV_GAP);
-                                }
-				new_way.push_back(old_waypoint[1]);
-                                cout << "current y when single right lane " << new_way[1];
-                                circle(img, Point(new_way[0], img.rows - new_way[1]),15 ,Scalar(150, 3, 15),-1,1,0);
-			}
-		}
-		else
-		{
-                        multi = 0;
-                        for (int i = 0; i < 10; i++) cout << "BOTH LANE: left? " << (fabs(obstacle[0]-((obstacle[1]*obstacle[1]/lam1) + a)) < fabs(obstacle[2]-((obstacle[3]*obstacle[3])/lam1 + a))) << endl;
-
-			//if(fabs(obstacle[0]-(((obstacle[1]*obstacle[1])/lam1) + a))<fabs(obstacle[2]-((obstacle[3]*obstacle[3])/lam1 + a)))//obstacle on left side
-			if(fabs(obstacle[0]-(((img.rows*img.rows)/(4*lam1)) + a))<fabs(obstacle[2]-((img.rows*img.rows)/(4*lam1) + a)))//obstacle on left side
-				new_way.push_back(obstacle[2]+NAV_GAP);
-			else//obstacle on right side
-				new_way.push_back(obstacle[0]-NAV_GAP);
-                        new_way.push_back(old_waypoint[1]);
-                        cout << "current y when double lane " << new_way[1];
-		}
-	}
-
-        circle(img, Point((float)((1.0*img.rows*img.rows)/(4*lam1) + a),img.rows/2),15 ,Scalar(255, 255, 0),-1,1,0);
-        
-        shift_x = new_way[0] - old_waypoint[0];
-        shift_y = (obstacle[1] - old_waypoint[1])/2;
-
-        theta = multi * fabs(atan(shift_y/shift_x)) + old_waypoint[2];
-        theta =  PI/4 + (old_waypoint[2]/2);
-	new_way.push_back(theta);
-        line(img, Point(new_way[0],img.rows- new_way[1]), Point(new_way[0] + 150*cos(theta),img.rows- new_way[1] - 150*sin(theta)) , Scalar(255, 255, 0), 4, 8);
-	return new_way;
-}
-*/
-
-
 vector<double> gen_new_way(Mat img, double a, double lam1, double lam2, double w, vector<double> old_waypoint) {
 
     vector<double> waypoint;
@@ -474,7 +373,11 @@ bool is_lane_horizontal (Mat img, float a, float lam) {
 
 		    for (int i = 0; i < lines.size();i++)
 		    {
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
 		    	cout<<i<<' ';
+=======
+		    	// cout<<i<<' ';
+>>>>>>> Final Worked code
 				maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
 				if (maxLenTemp > maxLen)
 				{
@@ -490,11 +393,19 @@ bool is_lane_horizontal (Mat img, float a, float lam) {
 		    return false;
 
 		}
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
 	}
 	catch(Exception &e)
 	{
 		return false;
 	}
+=======
+	}
+	catch(Exception &e)
+	{
+		return false;
+	}
+>>>>>>> Final Worked code
 	return false;
 }
 
@@ -547,7 +458,6 @@ vector<double> Lanes::gen_way(Mat img, Mat mario, float a, float lam1, float lam
 		is_prev_single=true;
 		//if lane is horizontal
 		if (is_lane_horizontal(mario, a, lam1) && is_prev_single) {
-
 		    //detecting horizontal lanes
 		    vector<Vec4i> lines;
 		    HoughLinesP(mario, lines,1, CV_PI/180, 40, 30, 10);
@@ -563,27 +473,27 @@ vector<double> Lanes::gen_way(Mat img, Mat mario, float a, float lam1, float lam
 					    double maxLenTemp = sqrt(pow(lines[i][0]-lines[i][2],2) + pow(lines[i][1]-lines[i][3], 2));
 					    if (maxLenTemp > maxLen)
 					    {
-						index = i;
-						maxLen = maxLenTemp;
+							index = i;
+							maxLen = maxLenTemp;
 					    }
 				}
 
 				double angle = atan((lines[index][1] - lines[index][3])/(double)(lines[index][0] - lines[index][2]));
 				if (fabs(angle) < degree_for_horizontal*PI/180)
 				{
-					    cout << "hough angle " << (fabs(angle)*180)/PI << endl;
+					    // cout << "hough angle " << (fabs(angle)*180)/PI << endl;
 					    cout << "HORIZONTAL LINE DETECTED\n";
 					    line(linesd, Point(lines[index][0],lines[index][1]), Point(lines[index][2],lines[index][3]) , Scalar(255), 1, 8, 0);
 					    way.clear();
 					    if (is_prev_single_left) {
-						way.push_back(3*mario.cols/4);
-						way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-						way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
+							way.push_back(3*mario.cols/4);
+							way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+							way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
 					    }
 					    else {
-						way.push_back(mario.cols/4);
-						way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
-						way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
+							way.push_back(mario.cols/4);
+							way.push_back(mario.rows - (lines[index][1] + mario.rows)/2);
+							way.push_back(-1*angle >= 0 ? -1*angle : PI + -1*angle);
 					    }
 					    is_lane_left = is_prev_single_left;
 				}
@@ -723,7 +633,11 @@ void Lanes::parabola()
                                        Point(1,1 ));
     erode(temp, temp, element);
 
+<<<<<<< f5cb4bf155597ceab254227a1ef8c474b31c7587
     dilate(temp, temp, element);
+=======
+    // dilate(temp, temp, element);
+>>>>>>> Final Worked code
 
     if (SHOW) {
 	imshow("temp", temp);
@@ -838,9 +752,7 @@ void Lanes::parabola()
 		}
     }
 
-    Mat mario_pub = mario.clone();
-    mario = checkPothole(mario);
-    /*	K is the kernel size and 
+   /*	K is the kernel size and 
      	dist_for_inlier is min(|dist in x from lane|, |dist in y|) for which a point is to be considered an inlier	*/
     // cout<<Q.size();
 
@@ -858,7 +770,7 @@ void Lanes::parabola()
 	cout<<"P size = "<<P.size()<<endl;
 	// for(int i = 0; i < P.size(); i++)
 	// 	cout<<P[i].x<<' '<<P[i].y<<endl;
-	    imshow("mario", mario);
+	    // imshow("mario", mario);
 	if (SHOW) {
 	    imshow("dotted_condom", dot);
 	    waitKey(2);
@@ -946,20 +858,12 @@ void Lanes::parabola()
 		// }
 
 		int score_loc = 0;/*, comm_count = 0;*/
-                int score_l_loc = 0, score_r_loc = 0;
+        int score_l_loc = 0, score_r_loc = 0;
 		float* param = parabola_params(ran_points);
 		float a = param[0], lam = param[1], lam2 = param[2], w = param[3];
 		if(isnan(w)) w = 15000;
 		// cout<<"sss "<<w<<endl;
 		if(!IsAllowed(lam, a, lam2, w, top_view.rows, top_view.cols)) continue;
-		if(!flag_width)
-		{
-			cout<<"%%%%%%"<<w<<endl;
-			width_lanes=w;
-			flag_width=1;
-		} 
-		if(flag_width&&abs(w)<5000)
-			width_lanes=width_lanes*0.8 + w*0.2;
 
 		for(int p = 0; p < P.size(); p++)
 		{
@@ -1015,113 +919,10 @@ void Lanes::parabola()
 			p2_g = p2;
 			p3_g = p3;
 			p4_g = p4;
-			cout<<score_gl<<'\t';
+			// cout<<score_gl<<'\t';
 			// comm_count_gl = comm_count;
 		}
 	}
-
-        /*
-        static int frame_count = 0;
-
-        if (frame_count % 9 == 0) frame_count = 0;
-
-        track temp;
-        temp.a = a_gl;
-        temp.w = w_gl;
-        temp.lam1 = lam_gl;
-        temp.lam2 = lam2_gl;
-
-        if (median.size() == 8) {
-                median.pop_front();
-                median.push_back(temp);
-        }
-        else {
-                median.push_back(temp);
-        }
-        frame_count++;
-
-
-        if (median[0].a > median[1].a && median[0].a > median[2].a) {
-                if (median[1].a > median[2]) {
-                        average.push_back(median[1]);
-                }
-                else {
-                        average.push_back(median[2]);
-                }
-        }
-        else {
-                if (median[0].a > median[1].a && median[0].a < median[2].a) {
-                        average.push_back(median[0]);
-                }
-
-                else if (median[0].a < median[1].a && median[0].a > median[2].a) {
-                        average.push_back(median[0]);
-                }
-                else {
-                        if (median[1].a < median[2]) {
-                                average.push_back(median[1]);
-                        }
-                        else {
-                                average.push_back(median[2]);
-                        }
-
-                }
-        }
-
-
-        track temp;
-        temp.a = a_gl;
-        temp.w = w_gl;
-        temp.lam1 = lam_gl;
-        temp.lam2 = lam2_gl;
-        track result;
-        result.a=0;
-        result.lam1=0;
-        result.lam2=0;
-        result.w=0;
-        median[frames%3]=temp;
-		if(frames%3==0)
-		{
-			if (median[0].a > median[1].a && median[0].a > median[2].a) {
-                if (median[1].a > median[2]) {
-                        average[(frames/3)%3]=(median[1]);
-                }
-                else {
-                        average[(frames/3)%3]=(median[2]);
-                }
-        	}
-        	else {
-                if (median[0].a > median[1].a && median[0].a < median[2].a) {
-                        average[(frames/3)%3]=(median[0]);
-                }
-
-                else if (median[0].a < median[1].a && median[0].a > median[2].a) {
-                        average[(frames/3)%3]=(median[0]);
-                }
-                else {
-                        if (median[1].a < median[2]) {
-                                average[(frames/3)%3]=(median[1]);
-                        }
-                        else {
-                                average[(frames/3)%3]=(median[2]);
-                        }
-
-                	}
-        		}
-		}
-		if(frames%9==0)
-		{
-
-			for(int i=0; i<3; i++)
-			{
-				result.a+=average[i].a;
-				result.w+=average[i].w;
-				result.lam1+=average[i].lam1;
-				result.lam2+=average[i].lam2;
-			}
-
-		}
-                */
 
 
 
@@ -1270,8 +1071,8 @@ void Lanes::parabola()
 	    obstacle_detected = -1*frames_to_skip_when_obstacle_detected;
 	}
 
-    	imshow("lines", linesd);
-	waitKey(2);
+    	// imshow("lines", linesd);
+	// waitKey(2);
 	//showing horizontal lanes
 	if (SHOW) {
 	;
@@ -1300,22 +1101,22 @@ void Lanes::parabola()
 	    way[1] = 0.5*waypoint_prev[1] + 0.5*way[1];
 	}
 
-	cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
-	cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
+	// cout<<"waypoint : "<<way[0]<<' '<<way[1]<<endl;
+	// cout<<"dim : "<<top_view.rows<<' '<<top_view.cols<<endl;
 
-	circle(top_view_rgb, Point(way[0], dot.rows - way[1]),20,Scalar(255, 0, 0),-1,8,0);
-	circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
-	arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
-	imshow("top view rgb with dot showing waypoint", top_view_rgb);
-    	imshow("top view grey for laser scan", new_dot);
-	waitKey(2);
+	// circle(top_view_rgb, Point(way[0], dot.rows - way[1]),20,Scalar(255, 0, 0),-1,8,0);
+	// circle(dot, Point(way[0], dot.rows - way[1]),10,Scalar(255),-1,8,0);
+	// arrowedLine(top_view_rgb, Point(way[0], top_view_rgb.rows - way[1]), Point(way[0] + 100*cos(way[2]), top_view_rgb.rows - way[1] - 100*sin(way[2])), Scalar(0, 0, 255), 3);
+	// imshow("top view rgb with dot showing waypoint", top_view_rgb);
+	// imshow("top view grey for laser scan", new_dot);
+	// waitKey(2);
 
 	// geometry_msgs::PoseStamped waypoint;
 	waypoint.pose.position.x = way[1]/PPM /*+ transform.getOrigin().x()*/;
 	waypoint.pose.position.y = -1*(way[0] - top_view.cols/2)/PPM/* + transform.getOrigin().y()*/;
 	waypoint.pose.position.z = 0 ;//+ transform.getOrigin().z();
 	float theta = (way[2] - PI/2) /*+ atan2(transform.getOrigin().y(),transform.getOrigin().x())*/;
-	cout<<"theta = "<<way[2]<<endl;
+	// cout<<"theta = "<<way[2]<<endl;
 
 	tf::Quaternion frame_qt = tf::createQuaternionFromYaw(theta);
 	waypoint.pose.orientation.x = frame_qt.x();
@@ -1341,7 +1142,7 @@ void Lanes::parabola()
 	ros::Publisher waypoint_pub = nh_.advertise<geometry_msgs::PoseStamped>("/lane", 10);
 	ros::Publisher lanes_pub = nh_.advertise<sensor_msgs::LaserScan>("/lanes", 1);
 
-	LaserScan scan = imageConvert(mario_pub);
+	LaserScan scan = imageConvert(mario);
 	lanes_pub.publish(scan);
 
 	++obstacle_detected;
@@ -1349,7 +1150,7 @@ void Lanes::parabola()
 	if(counter % 3 == 0 && obstacle_detected >= 0)
 	{
 		waypoint_pub.publish(waypoint);
-		cout<<"Published\n";
+		cout<<"Published\n\n\n";
 	}
 
 	if (SHOW) {
@@ -1730,37 +1531,4 @@ vector<int> obstacle_coords(Mat img, vector<double> old_way) {
         temp.push_back(y_r);
         obstacles.push_back(temp);
         return obstacles[0];
-}
-
-
-Mat checkPothole(Mat i)
-{
-	Mat img = i.clone();
-	// cvtColor(img,img,CV_BGR2GRAY);
-	Mat out_pot = img.clone();
-	Mat t = img.clone();
-	GaussianBlur(t,t,Size(9,9),2,2);
-	Canny(t,t,50,100,3);
-
-	vector<vector<Point> > contours,approx;
-	vector<Vec4i> heirarchy;
-	findContours(t,contours,heirarchy,CV_RETR_TREE,CV_CHAIN_APPROX_NONE);
-
-	approx.resize(contours.size());
-	for(int k = 0;k < approx.size();k++) {
-		approxPolyDP(Mat(contours[k]),approx[k],3,true);
-	}
-
-	for(int i = 0;i < approx.size();i++) {
-		if(approx.size() > 15) { //it is a circle
-			drawContours(out_pot,approx,i,Scalar(0,0,0),CV_FILLED);
-		}
-	}
-
-	if (SHOW) {
-		;
-	    // imshow("POT",out_pot);
-	    // waitKey(1);
-	}
-	return out_pot;
 }
